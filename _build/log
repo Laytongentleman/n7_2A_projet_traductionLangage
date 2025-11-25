@@ -1,0 +1,32 @@
+# dune runtest tests/gestion_id/avec_fonction/
+# OCAMLPARAM: unset
+# Shared cache: enabled-except-user-rules
+# Shared cache location: /home/louis/.cache/dune/db
+# Workspace root: /home/louis/Documents/ecole/n7/2A/tradLang/sourceEtu
+# Auto-detected concurrency: 4
+# Dune context:
+#  { name = "default"
+#  ; kind = "default"
+#  ; profile = Dev
+#  ; merlin = true
+#  ; fdo_target_exe = None
+#  ; build_dir = In_build_dir "default"
+#  ; instrument_with = []
+#  }
+$ /home/louis/.opam/default/bin/ocamlc.opt -config > /tmp/dune_d1440f_output
+$ (cd _build/default && .ppx/0b18c0af402a65a44ae8deb1b634936f/ppx.exe --cookie 'inline_tests="enabled"' --cookie 'library-name="rat"' -o passeTdsRat.pp.ml --impl passeTdsRat.ml -corrected-suffix .ppx-corrected -diff-cmd - -dump-ast)
+$ (cd _build/default && /home/louis/.opam/default/bin/ocamldep.opt -modules -impl passeTdsRat.pp.ml) > _build/default/.rat.objs/rat__PasseTdsRat.impl.d
+$ (cd _build/default && /home/louis/.opam/default/bin/ocamlc.opt -w @1..3@5..28@30..39@43@46..47@49..57@61..62-40 -strict-sequence -strict-formats -short-paths -keep-locs -warn-error -A -g -bin-annot -bin-annot-occurrences -I .rat.objs/byte -I /home/louis/.opam/default/lib/base -I /home/louis/.opam/default/lib/base/base_internalhash_types -I /home/louis/.opam/default/lib/base/shadow_stdlib -I /home/louis/.opam/default/lib/jane-street-headers -I /home/louis/.opam/default/lib/ocaml/unix -I /home/louis/.opam/default/lib/ocaml_intrinsics_kernel -I /home/louis/.opam/default/lib/ppx_compare/runtime-lib -I /home/louis/.opam/default/lib/ppx_enumerate/runtime-lib -I /home/louis/.opam/default/lib/ppx_expect/config -I /home/louis/.opam/default/lib/ppx_expect/config_types -I /home/louis/.opam/default/lib/ppx_expect/make_corrected_file -I /home/louis/.opam/default/lib/ppx_expect/runtime -I /home/louis/.opam/default/lib/ppx_hash/runtime-lib -I /home/louis/.opam/default/lib/ppx_here/runtime-lib -I /home/louis/.opam/default/lib/ppx_inline_test/config -I /home/louis/.opam/default/lib/ppx_inline_test/runtime-lib -I /home/louis/.opam/default/lib/ppx_sexp_conv/runtime-lib -I /home/louis/.opam/default/lib/ppxlib/print_diff -I /home/louis/.opam/default/lib/sexplib0 -I /home/louis/.opam/default/lib/stdio -I /home/louis/.opam/default/lib/time_now -no-alias-deps -opaque -open Rat -o .rat.objs/byte/rat__PasseTdsRat.cmo -c -impl passeTdsRat.pp.ml)
+> File "passeTdsRat.ml", line 198, characters 17-48:
+> 198 |   List.iter (fun (InfoVar(n,t,entier, registre)) -> Tds.ajouter tdsFille n (Tds.info_to_info_ast (InfoVar(n,t,entier,registre))  )) lpTds;
+>                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> Warning 8 [partial-match]: this pattern-matching is not exhaustive.
+> Here is an example of a case that is not matched:
+> (InfoConst (_, _)|InfoFun (_, _, _))
+>
+> File "passeTdsRat.ml", line 200, characters 70-76:
+> 200 |   let lpTdsAst = List.map (fun info -> (fst info, Tds.info_to_info_ast(info)) ) lpTds in
+>                                                                             ^^^^^^
+> Error: The value info has type 'a * 'b but an expression was expected of type
+>          info
+[2]
