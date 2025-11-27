@@ -34,15 +34,20 @@ let rec analyse_tds_expression tds e = match e with
       let expr1Tds = analyse_tds_expression tds expr1Tds in
       let expr2Tds = analyse_tds_expression tds expr2Tds in
       AstTds.Binaire (op, expr1Tds, expr2Tds)
-  | AstSyntax.AppelFonction (id, le) ->  
-    (* On cherche si la fonction existe *)
-      begin
-        let infoAst = match Tds.chercherGlobalement tds id with
-          | None -> raise (IdentifiantNonDeclare (id))
-          | Some info -> info
-        in
-        AstTds.AppelFonction ( infoAst, List.map (analyse_tds_expression tds) le)
-      end
+  | AstSyntax.AppelFonction (id, le) ->
+    begin
+      match chercherGlobalement tds id with
+      | None -> raise (IdentifiantNonDeclare id)
+      | Some info_ast ->
+          begin match info_ast_to_info info_ast with
+            | InfoFun _ ->
+                AstTds.AppelFonction (info_ast,
+                  List.map (analyse_tds_expression tds) le)
+            | _ ->
+                (* On appelle quelque chose qui n'est pas une fonction *)
+                raise (MauvaiseUtilisationIdentifiant id)
+          end
+    end
 
   (* | _ -> AstTds.Booleen (true) *)
 
@@ -181,27 +186,38 @@ and analyse_tds_bloc tds oia li =
 (* Vérifie la bonne utilisation des identifiants et tranforme la fonction
 en une fonction de type AstTds.fonction *)
 (* Erreur si mauvaise utilisation des identifiants *)
-let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li))  =
-  (* type fonction = Fonction of typ * string * (typ * string) list * bloc *)
-  (* type fonction = Fonction of typ * Tds.info_ast * (typ * Tds.info_ast ) list * bloc *)
-  
-    (* | InfoVar of string * typ * int * string *)
-  let nTds = (Tds.info_to_info_ast (InfoFun (n, t , List.map (fst) lp))) in
-  let infoName = match chercherGlobalement maintds n with
-    | None -> Tds.ajouter maintds n nTds;
-              
-    | Some info -> raise (DoubleDeclaration n)
-  in
+let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li)) =
+  (* On crée l'information associée à la fonction et on l'ajoute dans la TDS mère *)
+  let info_fun = InfoFun (n, t, List.map fst lp) in
+  let nTds = info_to_info_ast info_fun in
+  (* Vérification de l'existence préalable de la fonction dans la TDS mère *)
+  (match chercherGlobalement maintds n with
+  | None -> ajouter maintds n nTds
+  | Some _ -> raise (DoubleDeclaration n));
 
+
+  (* Création d'une tds fille pour le corps de la fonction *)
   let tdsFille = creerTDSFille maintds in
-  let lpTds = List.map (fun (typ,name ) -> InfoVar (name,typ, 0, "") ) lp in
-  List.iter (fun (InfoVar(n,t,entier, registre)) -> Tds.ajouter tdsFille n (Tds.info_to_info_ast (InfoVar(n,t,entier,registre))  )) lpTds;
 
-  let lpTdsAst = List.map (fun info -> (fst info, Tds.info_to_info_ast(info)) ) lpTds in
 
+  (* Ajout des paramètres dans la tds fille et construction de la liste (typ * info_ast) *)
+  let lpTds = List.map (fun (typ, name) ->
+  let info_param = InfoVar (name, typ, 0, "") in
+  let info_ast = info_to_info_ast info_param in
+  (* si besoin on peut vérifier les doubles déclarations locales des paramètres *)
+  (match chercherLocalement tdsFille name with
+  | None -> ajouter tdsFille name info_ast
+  | Some _ -> raise (DoubleDeclaration name));
+  (typ, info_ast)
+  ) lp in
+
+
+  (* Analyse du bloc de la fonction en passant l'information de la fonction *)
   let blocTds = analyse_tds_bloc tdsFille (Some nTds) li in
 
-  AstTds.Fonction (t, nTds, lpTds , blocTds) 
+
+  (* Retourne la représentation AstTds de la fonction *)
+  AstTds.Fonction (t, nTds, lpTds , blocTds)
 
 
 
