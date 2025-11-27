@@ -1,4 +1,0 @@
-test{
-  const x = 3;
-  int y = x; 
-}
