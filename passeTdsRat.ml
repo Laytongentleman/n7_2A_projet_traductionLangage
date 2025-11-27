@@ -15,12 +15,14 @@ en une expression de type AstTds.expression *)
 (* Erreur si mauvaise utilisation des identifiants *)
 let rec analyse_tds_expression tds e = match e with
   (* gestion des identifiants *)
-  | AstSyntax.Ident (str) -> begin 
+  | AstSyntax.Ident (str) -> begin
      (* On cherche si la valeur existe *)
       match Tds.chercherGlobalement tds str with
       | None -> raise (IdentifiantNonDeclare (str))
-      | Some info ->  AstTds.Ident info
-      end
+      |Some info -> match info_ast_to_info info with
+          | InfoFun(_,_,_) -> raise (MauvaiseUtilisationIdentifiant str)
+          | _ -> AstTds.Ident info
+  end
   (* Booléen *)
    | AstSyntax.Booleen bool -> AstTds.Booleen (bool) 
   (* Entier *)
@@ -40,7 +42,7 @@ let rec analyse_tds_expression tds e = match e with
       | None -> raise (IdentifiantNonDeclare id)
       | Some info_ast ->
           begin match info_ast_to_info info_ast with
-            | InfoFun _ ->
+            | InfoFun(_,_,_) ->
                 AstTds.AppelFonction (info_ast,
                   List.map (analyse_tds_expression tds) le)
             | _ ->
@@ -50,10 +52,6 @@ let rec analyse_tds_expression tds e = match e with
     end
 
   (* | _ -> AstTds.Booleen (true) *)
-
-
-
-
 
 (* analyse_tds_instruction : tds -> info_ast option -> AstSyntax.instruction -> AstTds.instruction *)
 (* Paramètre tds : la table des symboles courante *)
@@ -161,7 +159,6 @@ let rec analyse_tds_instruction tds oia i =
         AstTds.Retour (ne,ia)
       end
 
-
 (* analyse_tds_bloc : tds -> info_ast option -> AstSyntax.bloc -> AstTds.bloc *)
 (* Paramètre tds : la table des symboles courante *)
 (* Paramètre oia : None si le bloc li est dans le programme principal,
@@ -195,10 +192,8 @@ let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li)) =
   | None -> ajouter maintds n nTds
   | Some _ -> raise (DoubleDeclaration n));
 
-
   (* Création d'une tds fille pour le corps de la fonction *)
   let tdsFille = creerTDSFille maintds in
-
 
   (* Ajout des paramètres dans la tds fille et construction de la liste (typ * info_ast) *)
   let lpTds = List.map (fun (typ, name) ->
@@ -211,15 +206,11 @@ let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li)) =
   (typ, info_ast)
   ) lp in
 
-
   (* Analyse du bloc de la fonction en passant l'information de la fonction *)
   let blocTds = analyse_tds_bloc tdsFille (Some nTds) li in
 
-
   (* Retourne la représentation AstTds de la fonction *)
   AstTds.Fonction (t, nTds, lpTds , blocTds)
-
-
 
 
 (* analyser : AstSyntax.programme -> AstTds.programme *)
