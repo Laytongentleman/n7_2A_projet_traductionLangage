@@ -64,11 +64,11 @@ let analyse_placement_fonction (AstType.Fonction (info, lip, b)) =
   let _ = List.fold_right (fun param depl ->
     match Tds.info_ast_to_info param with
     | InfoVar (_, tparam, _, _) ->
-        modifier_adresse_variable depl "LB" param;
+        modifier_adresse_variable (depl - getTaille tparam) "LB" param;
         (* (Printf.printf "%d ") (depl); *)
-        depl - (getTaille tparam)
+        (depl - (getTaille tparam))
     | _ -> failwith "erreur interne"
-  ) lip (-1) in
+  ) lip (0) in
 
   let nb, _ = analyse_placement_bloc b 3 "LB" in
   AstPlacement.Fonction(info, lip, nb)
