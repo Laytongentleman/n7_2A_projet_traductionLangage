@@ -28,14 +28,13 @@ let rec analyse_code_expression e =
           failwith "erreur interne"
     in
     code_args ^ call "SB" nom_fonction
-  | AstType.Ident info -> 
+  | AstType.Ident info -> begin
     (*Récupération de l'adresse de la variable et de son type*)
-    let (t,d,r) = 
       match info_ast_to_info info with
-      |InfoVar(_,tr,dr,rr) -> (tr,dr,rr)
-      |_ -> failwith "erreur interne"
-    in
-    load (getTaille t) d r
+      | InfoVar(_, tr, dr, rr) -> load (getTaille tr) dr rr
+      | InfoConst(_, n) -> loadl_int n
+      | InfoFun(_, _, _) -> failwith "erreur interne: utilisation d'une fonction comme variable"
+    end 
   | AstType.Booleen b ->
     loadl_int (if b then 1 else 0)
   | AstType.Entier n ->
@@ -53,22 +52,22 @@ let rec analyse_code_expression e =
     let se2 = analyse_code_expression e2 in
     let sop =
       match op with
-      | AstType.Fraction ->
+      | Fraction ->
           (* constructeur n/d → pousse un rat : num puis den *)
-          se1 ^ se2
-      | AstType.PlusInt ->
+          se1 ^ se2 ^ call "SB" "norm"
+      | PlusInt ->
           se1 ^ se2 ^ subr "IAdd"
-      | AstType.MultInt ->
+      | MultInt ->
           se1 ^ se2 ^ subr "IMul"
-      | AstType.EquInt ->
+      | EquInt ->
           se1 ^ se2 ^ subr "IEq"
-      | AstType.EquBool ->
-          se1 ^ se2 ^ subr "BAnd"   
-      | AstType.Inf ->
-          se1 ^ se2 ^ subr "ILeq"
-      | AstType.PlusRat ->
+      | EquBool ->
+          se1 ^ se2 ^ subr "IEq"   
+      | Inf ->
+          se1 ^ se2 ^ subr "ILss"
+      | PlusRat ->
           se1 ^ se2 ^ call "SB" "RAdd"
-      | AstType.MultRat ->
+      | MultRat ->
           se1 ^ se2 ^ call "SB" "RMul"
     in
     sop
@@ -108,31 +107,35 @@ let rec analyse_code_instruction i =
     let st = analyse_code_bloc t in
     let se = analyse_code_bloc e in
 
-    let lbl_else = getEtiquette () in
-    let lbl_end  = getEtiquette () in
+    let nom_else = getEtiquette () in
+    let lbl_else = label nom_else in
+    let nom_end  = getEtiquette () in
+    let lbl_end  = label nom_end in
 
-    sc^ jumpif 0 lbl_else^ st^ jump lbl_end^ lbl_else ^ ":\n"^ se^ lbl_end ^ ":\n"
+    sc ^ jumpif 0 nom_else ^ st ^ jump nom_end ^ lbl_else ^ se ^ lbl_end
+
   | AstPlacement.TantQue (c, b) ->
-    let lbl_debut = getEtiquette () in
-    let lbl_fin   = getEtiquette () in
+    let nom_debut = getEtiquette () in
+    let lbl_debut = label nom_debut in
+    let nom_fin   = getEtiquette () in
+    let lbl_fin   = label nom_fin in
 
     let sc = analyse_code_expression c in
     let sb = analyse_code_bloc b in
 
-    lbl_debut ^ ":\n"^ sc^ jumpif 0 lbl_fin^ sb^ jump lbl_debut^ lbl_fin ^ ":\n"
+    lbl_debut ^ sc ^ jumpif 0 nom_fin ^ sb ^ jump nom_debut ^ lbl_fin  
   | AstPlacement.Retour (e, tailleRet, tailleParam) ->
     analyse_code_expression e
     ^ return tailleRet tailleParam
   | AstPlacement.Empty ->
-    ""
+    "\n"
 (* analyse_code_bloc : AstPlacement.bloc * int -> String *)
 and analyse_code_bloc (li, taille) =
-  let code_liste = List.map analyse_code_instruction li in
-  let code = String.concat "" code_liste in
-  code ^ pop 0 taille
+  List.fold_left (fun acc i -> acc ^ analyse_code_instruction i) "" li
+  ^ pop 0 taille
 
 (* analyse_code_fonction: AstPlacement.fonction -> String *)
-let analyse_code_fonction (AstPlacement.Fonction (info, _, (li, _))) =
+let analyse_code_fonction (AstPlacement.Fonction (info, _, (li, taille))) =
   (* Récupération des infos de la fonction *)
   let (nom_fonction, _, _) = match info_ast_to_info info with
     | InfoFun(n, _, _) -> (n, 0, 0)  (* les autres valeurs ne sont pas utiles ici *)
@@ -140,10 +143,9 @@ let analyse_code_fonction (AstPlacement.Fonction (info, _, (li, _))) =
   in
 
   (* Code du bloc de la fonction. Le RETURN est généré dans le bloc lui-même. *)
-  let code_liste = List.map analyse_code_instruction li in
-  let code_li = String.concat "" code_liste in
+  let code_li = analyse_code_bloc (li, taille) in
 
-  nom_fonction ^ ":\n" ^ code_li
+  label nom_fonction ^ code_li ^ halt
 
 (* analyse : AstPlacement.programme -> String *)
 (* Permet de passer d'un AstPlacement au code TAM d'un programme *)
@@ -151,8 +153,8 @@ let analyser (AstPlacement.Programme (fonctions, prog)) =
   let code_entete = getEntete () in
   let code_func_list = List.map analyse_code_fonction fonctions in
   let code_func = String.concat "" code_func_list in
-  let code_prog = analyse_code_bloc prog in
-  code_entete ^ code_func ^ code_prog
+  let code_prog = label "main"^analyse_code_bloc prog in
+  code_entete ^ code_func ^ code_prog ^ halt
 
 
 
