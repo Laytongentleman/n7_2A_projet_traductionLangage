@@ -98,6 +98,7 @@ let rec analyse_type_expression e =
       | InfoVar (n, _, _, _) -> raise (MauvaiseUtilisationIdentifiant n)
       | InfoConst (n, _) -> raise (MauvaiseUtilisationIdentifiant n)
     end
+  (* | _ -> raise MauvaiseUtilisationIdentifiant "ff" *)
 
 (* analyse_type_instruction : AstTds.instruction -> AstType.instruction *)
 let rec analyse_type_instruction i =

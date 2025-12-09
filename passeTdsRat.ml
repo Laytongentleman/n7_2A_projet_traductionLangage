@@ -1,7 +1,7 @@
 (* Module de la passe de gestion des identifiants *)
 (* doit être conforme à l'interface Passe *)
 open Tds
-open Exception
+open Exceptions
 open Ast
 
 type t1 = Ast.AstSyntax.programme
@@ -16,17 +16,37 @@ type t2 = Ast.AstTds.programme
 (* Vérifie la bonne utilisation des identifiants et tranforme l'expression
 en une expression de type AstTds.affectable *)
 (* Erreur si mauvaise utilisation des identifiants *)
-let rec analyser_tds_affectable tds a =  match a with
-  | Astsyntax.Deref r -> 
-    let nr = analyser_tds_affectable tds r in
-    AstTds.Deref nr
-   | AstSyntax.Ident (str) -> begin 
-      (* On cherche si la valeur existe *) 
-       match Tds.chercherGlobalement tds str with 
-      | None -> raise (IdentifiantNonDeclare (str)) 
-      |Some info -> match info_ast_to_info info with 
-           | InfoFun(_,_,_) -> raise (MauvaiseUtilisationIdentifiant str) 
-           | _ -> AstTds.Ident info *
+let rec analyser_tds_affectable tds a b =  match a with 
+  | AstSyntax.Ident (str) -> 
+      begin 
+      match Tds.chercherGlobalement tds str with 
+     | None -> raise (IdentifiantNonDeclare (str)) 
+     |Some info -> begin match info_ast_to_info info with 
+          | InfoFun(_,_,_) -> raise (MauvaiseUtilisationIdentifiant str) 
+          | _ -> AstTds.Ident info
+     end
+      end
+  | AstSyntax.Deref r ->
+      let nr = analyser_tds_affectable tds r b in
+      if not b then
+        match nr with
+        | AstTds.Ident info ->
+          begin
+              match info_ast_to_info info with
+              | InfoVar (name, typ, _, _) ->
+                  begin
+                    match typ with
+                    | Pointeur _ -> AstTds.Deref nr
+                    | _ -> raise (MauvaiseUtilisationIdentifiant name)
+                  end
+              | InfoConst (name, _)  -> raise (MauvaiseUtilisationIdentifiant name)
+              | InfoFun (name, _, _) -> raise (MauvaiseUtilisationIdentifiant name)
+            end
+        | AstTds.Deref _ -> AstTds.Deref nr
+      else
+        AstTds.Deref nr
+
+
 
 
 (* analyse_tds_expression : tds -> AstSyntax.expression -> AstTds.expression *)
@@ -72,8 +92,9 @@ let rec analyse_tds_expression tds e = match e with
                 raise (MauvaiseUtilisationIdentifiant id)
           end
     end
-  | AstSyntax.Affectable a -> analyser_tds_affectable tds a
+  | AstSyntax.Affectable a -> let na = analyser_tds_affectable tds a false in AstTds.Affectable na
   | AstSyntax.New typ ->  AstTds.New typ
+  | AstSyntax.Null -> AstTds.Null
   | _ -> failwith "analyse_tds_expression : cas non traité"
 
   (* | _ -> AstTds.Booleen (true) *)
@@ -111,8 +132,8 @@ let rec analyse_tds_instruction tds oia i =
             il a donc déjà été déclaré dans le bloc courant *)
             raise (DoubleDeclaration n)
       end
-  | AstSyntax.Affectation (a,e) ->
-      let na = analyser_tds_affectable a in
+  | AstSyntax.Affectation (a, e) ->
+      let na = analyser_tds_affectable tds a true in
       let ne = analyse_tds_expression tds e in
       AstTds.Affectation (na, ne)
   | AstSyntax.Constante (n,v) ->

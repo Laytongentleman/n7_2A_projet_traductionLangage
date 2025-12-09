@@ -44,7 +44,7 @@ expression =
   (* pointeur NULL   *)
   | Null
   (* expression affectable  *)
-  | Affectable of affectable
+  | Affectable of affectable 
 
 
 (* Instructions de Rat *)
@@ -53,7 +53,7 @@ and instruction =
   (* Déclaration de variable représentée par son type, son nom et l'expression d'initialisation *)
   | Declaration of typ * string * expression
   (* Affectation d'un affectable représentée par l'affectable et la nouvelle valeur affectée *)
-  | Affectation of affectable * expression
+  | Affectation of affectable * expression 
   (* Déclaration d'une constante représentée par son nom et sa valeur (entier) *)
   | Constante of string * int
   (* Affichage d'une expression *)
@@ -131,10 +131,14 @@ module AstType =
 struct
 
 (* Opérateurs unaires de Rat - résolution de la surcharge *)
-type unaire = Numerateur | Denominateur
+type unaire = Numerateur | Denominateur 
 
 (* Opérateurs binaires existants dans Rat - résolution de la surcharge *)
 type binaire = Fraction | PlusInt | PlusRat | MultInt | MultRat | EquInt | EquBool | Inf
+
+
+
+type affectable = Ident of Tds.info_ast | Deref of affectable 
 
 (* Expressions existantes dans Rat *)
 (* = expression de AstTds *)
@@ -145,6 +149,10 @@ type expression =
   | Entier of int
   | Unaire of unaire * expression
   | Binaire of binaire * expression * expression
+  | New of typ 
+  | Null 
+  | Affectable of affectable
+  | Adresse of Tds.info_ast
 
 (* instructions existantes Rat *)
 (* = instruction de AstTds + informations associées aux identificateurs, mises à jour *)
@@ -152,7 +160,7 @@ type expression =
 type bloc = instruction list
  and instruction =
   | Declaration of Tds.info_ast * expression
-  | Affectation of Tds.info_ast * expression
+  | Affectation of affectable * expression
   | AffichageInt of expression
   | AffichageRat of expression
   | AffichageBool of expression
