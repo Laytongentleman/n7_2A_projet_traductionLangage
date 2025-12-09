@@ -36,6 +36,9 @@ open Ast.AstSyntax
 %token MULT
 %token INF
 %token EOF
+%token NEW
+%token NULL
+%token ADRESSE
 
 (* Type de l'attribut synthétisé des non-terminaux *)
 %type <programme> prog
@@ -63,7 +66,7 @@ bloc : AO li=i* AF      {li}
 
 i :
 | t=typ n=ID EQUAL e1=e PV          {Declaration (t,n,e1)}
-| n=ID EQUAL e1=e PV                {Affectation (n,e1)}
+| a1=a EQUAL e1=e PV                {Affectation (a1,e1)}
 | CONST n=ID EQUAL e=ENTIER PV      {Constante (n,e)}
 | PRINT e1=e PV                     {Affichage (e1)}
 | IF exp=e li1=bloc ELSE li2=bloc   {Conditionnelle (exp,li1,li2)}
@@ -71,9 +74,14 @@ i :
 | RETURN exp=e PV                   {Retour (exp)}
 
 typ :
-| BOOL    {Bool}
-| INT     {Int}
-| RAT     {Rat}
+| BOOL       {Bool}
+| INT        {Int}
+| RAT        {Rat}
+| t=typ MULT {Pointeur t}
+
+a :
+| n=ID            {Ident n}
+| PO MULT a1=a PF {Deref a1}
 
 e : 
 | n=ID PO lp=separated_list(VIRG,e) PF   {AppelFonction (n,lp)}
@@ -89,5 +97,9 @@ e :
 | PO e1=e EQUAL e2=e PF   {Binaire (Equ,e1,e2)}
 | PO e1=e INF e2=e PF     {Binaire (Inf,e1,e2)}
 | PO exp=e PF             {exp}
+| a1=a                    {a}
+| NULL                    {Null}
+| PO NEW t=typ PF         {New t}
+| ADRESSE n=ID            {Adresse n}
 
 
