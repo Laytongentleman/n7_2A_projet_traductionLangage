@@ -3,6 +3,7 @@ open Type
 (* Interface des arbres abstraits *)
 module type Ast =
 sig
+   type affectable
    type expression
    type instruction
    type fonction
@@ -22,11 +23,15 @@ type unaire = Numerateur | Denominateur
 (* Opérateurs binaires de Rat *)
 type binaire = Fraction | Plus | Mult | Equ | Inf
 
-(* Expressions de Rat *)
+(* Affectables de Rat *)
+type affectable =
+  (* Accès à un identifiant représenté par son nom *) 
+  | Ident of string 
+  (* Déférencement d'un affectable *)
+  | Deref of affectable
 
-(* type affectable de RAT  *)
-type affectable = Ident of string | Deref of affectable and 
-expression =
+(* Expressions de Rat *)
+type expression =
   (* Appel de fonction représenté par le nom de la fonction et la liste des paramètres réels *)
   | AppelFonction of string * expression list
   (* Booléen *)
@@ -41,9 +46,9 @@ expression =
   | Adresse of string
   (* initialisation d'un pointeur *)
   | New of typ
-  (* pointeur NULL   *)
+  (* pointeur NULL *)
   | Null
-  (* expression affectable  *)
+  (* Affectable  *)
   | Affectable of affectable 
 
 
@@ -86,8 +91,11 @@ struct
   (* ~ expression de l'AST syntaxique où les noms des identifiants ont été
   remplacés par les informations associées aux identificateurs *)
 
-type affectable = Ident of Tds.info_ast | Deref of affectable 
-and expression =
+type affectable = 
+  | Ident of Tds.info_ast 
+  | Deref of affectable 
+
+type expression =
     | AppelFonction of Tds.info_ast * expression list
     | Booleen of bool
     | Entier of int

@@ -5,7 +5,7 @@ let rec string_of_type t =
   | Bool ->  "Bool"
   | Int  ->  "Int"
   | Rat  ->  "Rat"
-  | Pointeur t -> "Pointeur vers " ^ string_of_type t
+  | Pointeur t -> string_of_type t ^ "*"
   | Undefined -> "Undefined"
 
 
@@ -57,3 +57,8 @@ let getTaille t =
 let%test _ = getTaille Int = 1
 let%test _ = getTaille Bool = 1
 let%test _ = getTaille Rat = 2
+let%test _ = getTaille (Pointeur Int) = 1
+let%test _ = getTaille (Pointeur Bool) = 1
+let%test _ = getTaille (Pointeur Rat) = 1
+let%test _ = getTaille (Pointeur (Pointeur Int)) = 1
+
