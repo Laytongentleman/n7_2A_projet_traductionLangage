@@ -1,10 +1,11 @@
-type typ = Bool | Int | Rat | Undefined
+type typ = Bool | Int | Rat | Undefined | Pointeur of typ
 
-let string_of_type t = 
+let rec string_of_type t = 
   match t with
   | Bool ->  "Bool"
   | Int  ->  "Int"
   | Rat  ->  "Rat"
+  | Pointeur t -> "Pointeur vers " ^ string_of_type t
   | Undefined -> "Undefined"
 
 

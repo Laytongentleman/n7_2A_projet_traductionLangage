@@ -48,6 +48,7 @@ open Ast.AstSyntax
 %type <typ> typ
 %type <typ*string> param
 %type <expression> e 
+%type <affectable> a 
 
 (* Type et définition de l'axiome *)
 %start <Ast.AstSyntax.programme> main
@@ -86,7 +87,6 @@ a :
 e : 
 | n=ID PO lp=separated_list(VIRG,e) PF   {AppelFonction (n,lp)}
 | CO e1=e SLASH e2=e CF   {Binaire(Fraction,e1,e2)}
-| n=ID                    {Ident n}
 | TRUE                    {Booleen true}
 | FALSE                   {Booleen false}
 | e=ENTIER                {Entier e}
@@ -97,7 +97,7 @@ e :
 | PO e1=e EQUAL e2=e PF   {Binaire (Equ,e1,e2)}
 | PO e1=e INF e2=e PF     {Binaire (Inf,e1,e2)}
 | PO exp=e PF             {exp}
-| a1=a                    {a}
+| a1=a                    {Affectable a1}
 | NULL                    {Null}
 | PO NEW t=typ PF         {New t}
 | ADRESSE n=ID            {Adresse n}
