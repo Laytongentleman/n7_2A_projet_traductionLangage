@@ -39,14 +39,18 @@ open Ast.AstSyntax
 %token NEW
 %token NULL
 %token ADRESSE
+%token VOID
+%token REF
+%token ENUM
+%token <string> TID
 
 (* Type de l'attribut synthétisé des non-terminaux *)
-%type <programme> prog
+%type <programme> prog_complet
 %type <instruction list> bloc
 %type <fonction> fonc
 %type <instruction> i
 %type <typ> typ
-%type <typ*string> param
+%type <param> param
 %type <expression> e 
 %type <affectable> a 
 
@@ -55,13 +59,15 @@ open Ast.AstSyntax
 
 %%
 
-main : lfi=prog EOF     {lfi}
+main : p=prog_complet EOF     {p}
 
-prog : lf=fonc* ID li=bloc  {Programme (lf,li)}
+prog_complet : le=enum_decl* lf=fonc* li=bloc { Programme (le, lf, li)}
+
+enum_decl : ENUM n=TID AO lid=separated_list(VIRG, TID) AF PV { Enum(n, lid) }
 
 fonc : t=typ n=ID PO lp=separated_list(VIRG,param) PF li=bloc {Fonction(t,n,lp,li)}
 
-param : t=typ n=ID  {(t,n)}
+param : r=REF? t=typ n=ID {(r <> None, t, n)}
 
 bloc : AO li=i* AF      {li}
 
@@ -73,12 +79,16 @@ i :
 | IF exp=e li1=bloc ELSE li2=bloc   {Conditionnelle (exp,li1,li2)}
 | WHILE exp=e li=bloc               {TantQue (exp,li)}
 | RETURN exp=e PV                   {Retour (exp)}
+| RETURN PV                         {RetourVoid}
+| n=ID PO lp=separated_list(VIRG,e) PF PV {AppelProcedure(n,lp)}
 
 typ :
 | BOOL       {Bool}
 | INT        {Int}
 | RAT        {Rat}
+| VOID       {Void}
 | t=typ MULT {Pointeur t}
+| n=TID      {Tid n }
 
 a :
 | n=ID            {Ident n}
@@ -101,5 +111,7 @@ e :
 | NULL                    {Null}
 | PO NEW t=typ PF         {New t}
 | ADRESSE n=ID            {Adresse n}
+| REF e1=e                {Ref e1}
+| n=TID                   {EnumE n}
 
 
