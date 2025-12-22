@@ -50,6 +50,7 @@ struct
     | Equ -> "= "
     | Inf -> "< "
 
+  (* Conversion des affectables *)
   let rec string_of_affectable = function
     | Ident s -> s 
     | Deref a2 -> "* " ^  (string_of_affectable a2)
@@ -62,9 +63,11 @@ struct
     | Booleen b -> if b then "true " else "false "
     | Entier i -> (string_of_int i)^" "
     | Unaire (op,e1) -> (string_of_unaire op) ^ (string_of_expression e1)^" "
-    | New (typ) ->  string_of_type typ ^ " "
+    | New t -> "(new " ^ (string_of_type t) ^ ") "
     | Null -> "NULL "
     | Adresse s -> "& " ^ s^" " 
+    | Ref e1 -> "ref " ^ (string_of_expression e1)
+    | EnumE s -> s ^ " "
     | Binaire (b,e1,e2) ->
         begin
           match b with
@@ -85,16 +88,23 @@ struct
     | TantQue (c,b) -> "TantQue  : TQ "^(string_of_expression c)^"\n"^
                                   "FAIRE \n"^((List.fold_right (fun i tq -> (string_of_instruction i)^tq) b ""))^"\n"
     | Retour (e) -> "Retour  : RETURN "^(string_of_expression e)^"\n"
+    | RetourVoid -> "Retour : return;\n"
+    | AppelProcedure (n,le) -> "AppelProc : " ^ n ^ "(" ^ (String.concat ", " (List.map string_of_expression le)) ^ ");\n"
 
   (* Conversion des fonctions *)
   let string_of_fonction (Fonction(t,n,lp,li)) = (string_of_type t)^" "^n^" ("^((List.fold_right (fun (t,n) tq -> (string_of_type t)^" "^n^" "^tq) lp ""))^") = \n"^
                                         ((List.fold_right (fun i tq -> (string_of_instruction i)^tq) li ""))^"\n"
+  
+  (* Conversion des déclarations d'énumérations *)
+  let string_of_enum (Enum(n, members)) =
+    "enum " ^ n ^ " { " ^ (String.concat ", " members) ^ " };\n"
 
-  (* Conversion d'un programme Rat *)
-  let string_of_programme (Programme (fonctions, instruction)) =
-    (List.fold_right (fun f tq -> (string_of_fonction f)^tq) fonctions "")^
-    (List.fold_right (fun i tq -> (string_of_instruction i)^tq) instruction "")
-
+  (* Conversion d'un programme Rat complet *)
+  let string_of_programme (Programme (enums, fonctions, instructions)) =
+    (String.concat "" (List.map string_of_enum enums)) ^ "\n" ^
+    (String.concat "\n" (List.map string_of_fonction fonctions)) ^ "\n" ^
+    "Main :\n" ^ (String.concat "" (List.map string_of_instruction instructions))
+    
   (* Affichage d'un programme Rat *)
   let print_programme programme =
     print_string "AST : \n";
