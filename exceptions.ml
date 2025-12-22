@@ -11,5 +11,13 @@ exception TypeInattendu of typ * typ     (* Le premier type est le type réel, l
 exception TypesParametresInattendus of typ list * typ list (* types réels, types attendus *)
 exception TypeBinaireInattendu of binaire * typ * typ      (* les types réels non compatibles avec les signatures connues de l'opérateur *)
 
+(* Exceptions pour les énumérations *)
+exception ValeurEnumInexistante of string
+
+(* Exceptions pour les fonctions et procédures*)
+exception RetourVideDansFonction
+exception RetourNonVideDansProcedure
+exception AppelFonctionPourProcedure of string
+
 (* Utilisation illégale de return dans le programme principal *)
 exception RetourDansMain
