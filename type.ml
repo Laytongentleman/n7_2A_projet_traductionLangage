@@ -35,7 +35,7 @@ let%test _ = not (est_compatible Bool Undefined)
 let%test _ = not (est_compatible Undefined Int)
 let%test _ = not (est_compatible Undefined Rat)
 let%test _ = not (est_compatible Undefined Bool)
-let%test _ = not (est_compatible Void Tid)
+let%test _ = not (est_compatible Void (Tid "Long"))
 let%test _ = not (est_compatible (Tid "Jour") (Tid "Couleur"))
 
 let est_compatible_list lt1 lt2 =
@@ -80,7 +80,7 @@ let%test _ = getTaille (Pointeur Int) = 1
 let%test _ = getTaille (Pointeur Bool) = 1
 let%test _ = getTaille (Pointeur Rat) = 1
 let%test _ = getTaille (Pointeur (Pointeur Int)) = 1
-let%test _ getTaille Void = 0
+let%test _ = getTaille Void = 0
 let%test _ = getTaille (Tid "Jour") = 1
 let%test _ = getTaille (Pointeur (Tid "Jour")) = 1
 
