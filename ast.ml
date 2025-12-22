@@ -118,6 +118,8 @@ struct
     | Null 
     | Affectable of affectable
     | Adresse of Tds.info_ast
+    | Ref of expression
+    | EnumE of Tds.info_ast
 
   (* instructions existantes dans notre langage *)
   (* ~ instruction de l'AST syntaxique où les noms des identifiants ont été
@@ -132,14 +134,20 @@ struct
     | TantQue of expression * bloc
     | Retour of expression * Tds.info_ast  (* les informations sur la fonction à laquelle est associé le retour *)
     | Empty (* les nœuds ayant disparus: Const *)
+    | RetourVoid
+    | AppelProcedure of Tds.info_ast * expression list
 
 
   (* Structure des fonctions dans notre langage *)
   (* type de retour - informations associées à l'identificateur (dont son nom) - liste des paramètres (association type et information sur les paramètres) - corps de la fonction *)
   type fonction = Fonction of typ * Tds.info_ast * (typ * Tds.info_ast ) list * bloc
 
+  (* Strcuture des énumérations *)
+  type enum_decl =
+    | Enum of Tds.info_ast * Tds.info_ast list
+
   (* Structure d'un programme dans notre langage *)
-  type programme = Programme of fonction list * bloc
+  type programme = Programme of enum_decl list * fonction list * bloc
 
 end
 
@@ -173,6 +181,8 @@ type expression =
   | Null 
   | Affectable of Tds.info_ast
   | Adresse of Tds.info_ast
+  | Ref of expression
+  | EnumE of Tds.info_ast
 
 (* instructions existantes Rat *)
 (* = instruction de AstTds + informations associées aux identificateurs, mises à jour *)
