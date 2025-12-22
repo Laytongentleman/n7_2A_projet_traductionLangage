@@ -1,0 +1,8 @@
+void p() {
+  print 1;
+  return;
+}
+
+test {
+  p();
+}

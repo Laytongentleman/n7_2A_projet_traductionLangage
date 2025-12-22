@@ -1,0 +1,5 @@
+void p() {}
+
+test {
+  int x = p();
+}

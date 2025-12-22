@@ -1,0 +1,9 @@
+void p(int a, int b) {
+  print a;
+  print b;
+  return;
+}
+
+test {
+  p(1, 2);
+}
