@@ -90,11 +90,20 @@ struct
     | Retour (e) -> "Retour  : RETURN "^(string_of_expression e)^"\n"
     | RetourVoid -> "Retour : return;\n"
     | AppelProcedure (n,le) -> "AppelProc : " ^ n ^ "(" ^ (String.concat ", " (List.map string_of_expression le)) ^ ");\n"
+  
+  (*Conversion de paramètres *)
+  let string_of_param (is_ref, t, n) =
+    (if is_ref then "ref " else "")
+    ^ (string_of_type t) ^ " " ^ n
 
   (* Conversion des fonctions *)
-  let string_of_fonction (Fonction(t,n,lp,li)) = (string_of_type t)^" "^n^" ("^((List.fold_right (fun (t,n) tq -> (string_of_type t)^" "^n^" "^tq) lp ""))^") = \n"^
-                                        ((List.fold_right (fun i tq -> (string_of_instruction i)^tq) li ""))^"\n"
-  
+  let string_of_fonction (Fonction (t, n, lp, li)) =
+    (string_of_type t) ^ " " ^ n ^ " ("
+    ^ (String.concat ", " (List.map string_of_param lp))
+    ^ ") = \n"
+    ^ (String.concat "" (List.map string_of_instruction li))
+    ^ "\n"
+
   (* Conversion des déclarations d'énumérations *)
   let string_of_enum (Enum(n, members)) =
     "enum " ^ n ^ " { " ^ (String.concat ", " members) ^ " };\n"
