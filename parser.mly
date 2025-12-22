@@ -61,7 +61,7 @@ open Ast.AstSyntax
 
 main : p=prog_complet EOF     {p}
 
-prog_complet : le=enum_decl* lf=fonc* li=bloc { Programme (le, lf, li)}
+prog_complet : le=enum_decl* lf=fonc* ID li=bloc { Programme (le, lf, li)}
 
 enum_decl : ENUM n=TID AO lid=separated_list(VIRG, TID) AF PV { Enum(n, lid) }
 
