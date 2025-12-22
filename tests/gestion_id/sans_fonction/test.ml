@@ -145,6 +145,7 @@ let rec test d p_tam =
     test d p_tam
   with End_of_file -> ()
 
+
 let%test_unit "all_tam" =
   let p_tam = "../../../../../tests/tam/sans_fonction/fichiersRat/" in
   let d = opendir p_tam in
