@@ -10,9 +10,9 @@ type t2 = Ast.AstTds.programme
 (* analyse_tds_affectable : tds -> AstSyntax.affectable -> bool -> AstTds.affectable *)
 (* Paramètre tds : la table des symboles courante *)
 (* Paramètre a : l'affectable à analyser *)
-(* Paramètre ecriture : un booléen pour signifier l'écriture ou la lecture*)
-(* Vérifie la bonne utilisation des identifiants et tranforme l'affectable
-en une affectable de type AstTds.affectable *)
+(* Paramètre ecriture : un booléen pour signifier l'écriture ou la lecture *)
+(* Vérifie la bonne utilisation des identifiants et tranforme l'affectable *)
+(* en une affectable de type AstTds.affectable *)
 (* Erreur si mauvaise utilisation des identifiants *)
 let rec analyse_tds_affectable tds a ecriture =  
   match a with 
@@ -23,6 +23,7 @@ let rec analyse_tds_affectable tds a ecriture =
         match info_ast_to_info info with
         (* On peut écrire et lire une variable *) 
         | InfoVar _  -> AstTds.Ident info
+        | InfoParam _ -> AstTds.Ident info
           (* On peut seulement lire une constante *)
         | InfoConst _ ->
           if ecriture then raise (MauvaiseUtilisationIdentifiant str)
@@ -34,14 +35,14 @@ let rec analyse_tds_affectable tds a ecriture =
   | AstSyntax.Deref a ->
       let na = analyse_tds_affectable tds a ecriture in
       AstTds.Deref na 
-      
+
 (* analyse_tds_expression : tds -> AstSyntax.expression -> AstTds.expression *)
 (* Paramètre tds : la table des symboles courante *)
 (* Paramètre e : l'expression à analyser *)
-(* Vérifie la bonne utilisation des identifiants et tranforme l'expression
-en une expression de type AstTds.expression *)
+(* Vérifie la bonne utilisation des identifiants et tranforme l'expression *)
+(* en une expression de type AstTds.expression *)
 (* Erreur si mauvaise utilisation des identifiants *)
-let rec analyse_tds_expression tds e = 
+let rec analyse_tds_expression tds e =
   match e with
   (* Booléen *)
    | AstSyntax.Booleen bool -> AstTds.Booleen (bool) 
@@ -49,28 +50,35 @@ let rec analyse_tds_expression tds e =
    | AstSyntax.Entier entier -> AstTds.Entier (entier)
   (*  Opération unaire représentée par l'opérateur et l'opérande *) 
   | AstSyntax.Unaire (op, expr) ->
-      let exprTds = analyse_tds_expression tds expr in
+      let exprTds = analyse_tds_expression tds expr in 
       AstTds.Unaire (op, exprTds)
   (* Opération binaire représentée par l'opérateur, l'opérande gauche et l'opérande droite *) 
   | AstSyntax.Binaire (op, expr1Tds, expr2Tds) ->
-      let expr1Tds = analyse_tds_expression tds expr1Tds in
-      let expr2Tds = analyse_tds_expression tds expr2Tds in
-      AstTds.Binaire (op, expr1Tds, expr2Tds)
+      let ne1 = analyse_tds_expression tds expr1Tds in 
+      let ne2 = analyse_tds_expression tds expr2Tds in 
+      AstTds.Binaire (op, ne1, ne2)
   (* Gestion de l'appel de fonction *)
   | AstSyntax.AppelFonction (id, le) ->
+    (* Cherche l'existence de la fonction dans la TDS globale *)
     begin
-      match chercherGlobalement tds id with
-      | None -> raise (IdentifiantNonDeclare id)
+      match Tds.chercherGlobalement tds id with
+      | None ->
+          (* La fonction n'existe pas *)
+          raise (IdentifiantNonDeclare id)
       | Some info_ast ->
-          begin match info_ast_to_info info_ast with
-            | InfoFun(_,_,_) ->
-                AstTds.AppelFonction (info_ast,
-                  List.map (analyse_tds_expression tds) le)
+          begin
+            match info_ast_to_info info_ast with
+            | InfoFun (_, _, _) ->
+                (* Analyse de tous les arguments de l'appel *)
+                let leTds = List.map (analyse_tds_expression tds) le in
+                (* Construction de l'AST TDS pour l'appel de fonction *)
+                AstTds.AppelFonction (info_ast, leTds)
             | _ ->
                 (* On appelle quelque chose qui n'est pas une fonction *)
                 raise (MauvaiseUtilisationIdentifiant id)
           end
     end
+  (* Gestion des appel à une adresse avec & *)
   | AstSyntax.Adresse id -> begin
     match chercherGlobalement tds id with
     (* Cas où le pointeur n'existe pas *)
@@ -99,6 +107,22 @@ let rec analyse_tds_expression tds e =
   | AstSyntax.New typ ->  AstTds.New typ
   (* Gestion de null *)
   | AstSyntax.Null -> AstTds.Null
+  (* Gestion des références *)
+  | AstSyntax.Ref e ->
+    (* Analyse de son expression *)
+    let ne = analyse_tds_expression tds e in
+    AstTds.Ref ne
+  (* Gestion de l'utilisation d'une valeur enum *) 
+  | AstSyntax.EnumE n -> begin
+    match Tds.chercherGlobalement tds n with 
+    | None -> raise (IdentifiantNonDeclare n)
+    | Some info -> begin 
+      (* On vérifie que c'est une valeur d'énum *)
+      match info_ast_to_info info with 
+      | InfoEnumVal(_,_,_,_) -> AstTds.EnumE info 
+      | _ -> raise (MauvaiseUtilisationIdentifiant n)
+    end
+  end
 
 (* analyse_tds_instruction : tds -> info_ast option -> AstSyntax.instruction -> AstTds.instruction *)
 (* Paramètre tds : la table des symboles courante *)
@@ -117,7 +141,7 @@ let rec analyse_tds_instruction tds oia i =
         il n'a donc pas été déclaré dans le bloc courant *)
         (* Vérification de la bonne utilisation des identifiants dans l'expression *)
         (* et obtention de l'expression transformée *)
-        let ne = analyse_tds_expression tds e in
+        let ne = analyse_tds_expression tds e in 
         (* Création de l'information associée à l'identfiant *)
         let info = InfoVar (n, Undefined, 0, "") in
         (* Création du pointeur sur l'information *)
@@ -136,7 +160,7 @@ let rec analyse_tds_instruction tds oia i =
       (* Analyse de l'affectable *)
       let na = analyse_tds_affectable tds a true in
       (* Analyse de l'expression *)
-      let ne = analyse_tds_expression tds e in
+      let ne = analyse_tds_expression tds e in 
       AstTds.Affectation (na, ne)
   | AstSyntax.Constante (n,v) -> begin
       match chercherLocalement tds n with
@@ -155,7 +179,7 @@ let rec analyse_tds_instruction tds oia i =
   | AstSyntax.Affichage e ->
       (* Vérification de la bonne utilisation des identifiants dans l'expression *)
       (* et obtention de l'expression transformée *)
-      let ne = analyse_tds_expression tds e in
+      let ne = analyse_tds_expression tds e in 
       (* Renvoie du nouvel affichage où l'expression remplacée par l'expression issue de l'analyse *)
       AstTds.Affichage (ne)
   | AstSyntax.Conditionnelle (c,t,e) ->
@@ -169,7 +193,7 @@ let rec analyse_tds_instruction tds oia i =
       AstTds.Conditionnelle (nc, tast, east)
   | AstSyntax.TantQue (c,b) ->
       (* Analyse de la condition *)
-      let nc = analyse_tds_expression tds c in
+      let nc = analyse_tds_expression tds c in 
       (* Analyse du bloc *)
       let bast = analyse_tds_bloc tds oia b in
       (* Renvoie la nouvelle structure de la boucle *)
@@ -179,12 +203,45 @@ let rec analyse_tds_instruction tds oia i =
       match oia with
         (* Il n'y a pas d'information -> l'instruction est dans le bloc principal : erreur *)
       | None -> raise RetourDansMain
-        (* Il y a une information -> l'instruction est dans une fonction *)
-      | Some ia ->
-        (* Analyse de l'expression *)
-        let ne = analyse_tds_expression tds e in
-        AstTds.Retour (ne,ia)
+        (* Il y a une information -> l'instruction est dans une fonction ou une procédure *)
+      | Some ia -> begin 
+        match info_ast_to_info ia with 
+        | InfoFun (_, t, _) -> 
+          if t=Void then 
+            raise (RetourVideDansFonction)
+          else 
+            (* Analyse de l'expression *)
+            let ne = analyse_tds_expression tds e in 
+            AstTds.Retour (ne,ia)
+        | _ -> failwith "erreur interne"
+        end
   end
+  | AstSyntax.RetourVoid -> begin 
+    (* On doit s'assurer que le return se trouve bien dans une procédure *)
+    match oia with
+    (* Il n'y a pas d'information -> l'instruction est dans le bloc principal : erreur *)
+      | None -> raise RetourDansMain
+        (* Il y a une information -> l'instruction est dans une procédure *)
+      | Some ia -> begin 
+        match info_ast_to_info ia with 
+        | InfoFun (_,t,_) -> 
+          if t=Void then AstTds.RetourVoid else raise (RetourNonVideDansProcedure)
+        | _ -> failwith "erreur interne" 
+      end
+    end
+  | AstSyntax.AppelProcedure (n,lp) -> begin
+    (* On cherche l'existence de la procédure *)
+    match Tds.chercherGlobalement tds n with
+    | None -> raise (IdentifiantNonDeclare n)
+    | Some info_ast ->
+        begin match info_ast_to_info info_ast with
+        | InfoFun (_, t, _) when t = Void ->
+            let args_tds = List.map (analyse_tds_expression tds) lp in
+            AstTds.AppelProcedure (info_ast, args_tds)
+        | InfoFun (_, _, _) -> raise (AppelFonctionPourProcedure n)
+        | _ -> failwith "erreur interne"
+        end
+      end
 
 (* analyse_tds_bloc : tds -> info_ast option -> AstSyntax.bloc -> AstTds.bloc *)
 (* Paramètre tds : la table des symboles courante *)
@@ -203,6 +260,48 @@ and analyse_tds_bloc tds oia li =
    (* afficher_locale tdsbloc ; *) (* décommenter pour afficher la table locale *)
    nli
 
+(* analyse_tds_enum : tds -> AstSyntax.Enum -> AstTds.Enum *)
+(* Paramètres : 
+      - tds : la table des symboles courante
+      - Enum  : la déclaration d'énumération issue de l'AST syntaxique
+   Résultat : 
+      - renvoie une déclaration d'énumération dans l'AST TDS
+   Fonctionnalité :
+      - Vérifie que le nom de l'énum n'est pas déjà déclaré dans le bloc courant
+      - Ajoute l'énum dans la TDS
+      - Pour chaque membre, crée une info associée et l'ajoute dans la TDS
+      - Renvoie un AstTds.Enum contenant les infos de l'énum et de ses membres
+   Exceptions :
+      - DoubleDeclaration si le nom de l'énum existe déjà dans la TDS
+*)
+let analyse_tds_enum tds (AstSyntax.Enum (nom_enum, membres)) =
+  (* Vérification que l'énum n'existe pas déjà localement *)
+  match Tds.chercherLocalement tds nom_enum with
+  | Some _ -> raise (DoubleDeclaration nom_enum)
+  | None ->
+      (* Création de l'information associée à l'énum *)
+      let info_enum = InfoEnum (nom_enum) in
+      let ia_enum = info_to_info_ast info_enum in
+      (* Ajout de l'énum dans la TDS *)
+      Tds.ajouter tds nom_enum ia_enum;
+
+      (* Analyse et ajout des membres *)
+      let ia_membres =
+        List.map (fun membre ->
+          (* Vérification que le membre n'existe pas déjà *)
+          match Tds.chercherLocalement tds membre with
+          | Some _ -> raise (DoubleDeclaration membre)
+          | None ->
+              let info_membre = InfoEnumVal (membre, nom_enum, 0, "") in
+              let ia_membre = info_to_info_ast info_membre in
+              Tds.ajouter tds membre ia_membre;
+              ia_membre
+        ) membres
+      in
+      (* Retourne la déclaration d'énumération TDS *)
+      AstTds.Enum (ia_enum, ia_membres)
+
+
 (* analyse_tds_fonction : tds -> AstSyntax.fonction -> AstTds.fonction *)
 (* Paramètre tds : la table des symboles courante *)
 (* Paramètre : la fonction à analyser *)
@@ -211,7 +310,7 @@ en une fonction de type AstTds.fonction *)
 (* Erreur si mauvaise utilisation des identifiants *)
 let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li)) =
   (* On crée l'information associée à la fonction et on l'ajoute dans la TDS mère *)
-  let info_fun = InfoFun (n, t, List.map fst lp) in
+  let info_fun = InfoFun (n, t, List.map (fun (_, typ, _) -> typ) lp) in
   let nTds = info_to_info_ast info_fun in
   (* Vérification de l'existence préalable de la fonction dans la TDS mère *)
   (match chercherGlobalement maintds n with
@@ -221,16 +320,19 @@ let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li)) =
   (* Création d'une tds fille pour le corps de la fonction *)
   let tdsFille = creerTDSFille maintds in
 
-  (* Ajout des paramètres dans la tds fille et construction de la liste (typ * info_ast) *)
-  let lpTds = List.map (fun (typ, name) ->
-  let info_param = InfoVar (name, typ, 0, "") in
-  let info_ast = info_to_info_ast info_param in
-  (* si besoin on peut vérifier les doubles déclarations locales des paramètres *)
-  (match chercherLocalement tdsFille name with
-  | None -> ajouter tdsFille name info_ast
-  | Some _ -> raise (DoubleDeclaration name));
-  (typ, info_ast)
-  ) lp in
+  (* Analyse des paramètres *)
+  let lpTds =
+    List.map (fun (is_ref, typ, name) ->
+      (* Création de l'info pour le paramètre avec le booléen de passage par référence *)
+      let info_param = InfoParam (name, typ, is_ref) in
+      let ia_param = info_to_info_ast info_param in
+      (* Vérification des doublons dans la TDS fille *)
+      (match Tds.chercherLocalement tdsFille name with
+      | None -> Tds.ajouter tdsFille name ia_param
+      | Some _ -> raise (DoubleDeclaration name));
+      (typ, ia_param)
+    ) lp
+  in
 
   (* Analyse du bloc de la fonction en passant l'information de la fonction *)
   let blocTds = analyse_tds_bloc tdsFille (Some nTds) li in
@@ -243,8 +345,18 @@ let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li)) =
 (* Vérifie la bonne utilisation des identifiants et tranforme le programme
 en un programme de type AstTds.programme *)
 (* Erreur si mauvaise utilisation des identifiants *)
-let analyser (AstSyntax.Programme (fonctions,prog)) =
+let analyser (AstSyntax.Programme (enums, fonctions, bloc_principal)) =
+  (* Création de la TDS mère *)
   let tds = creerTDSMere () in
-  let nf = List.map (analyse_tds_fonction tds) fonctions in
-  let nb = analyse_tds_bloc tds None prog in
-  AstTds.Programme (nf,nb)
+
+  (* Analyse des enums *)
+  let enumsTds = List.map (fun e -> analyse_tds_enum tds e) enums in
+
+  (* Analyse des fonctions *)
+  let fonctionsTds = List.map (fun f -> analyse_tds_fonction tds f) fonctions in
+
+  (* Analyse du bloc principal *)
+  let blocTds = analyse_tds_bloc tds None bloc_principal in
+
+  (* Retour du programme complet en AST TDS *)
+  AstTds.Programme (enumsTds, fonctionsTds, blocTds)
