@@ -24,13 +24,16 @@
         "bool",    BOOL;
         "int",     INT;
         "rat",     RAT;
+        "void",    VOID;
         "num",     NUM;
         "denom",   DENOM;
         "true",    TRUE;
         "false",   FALSE;
-        "new",   NEW;
-        "null",  NULL;
-        "return",  RETURN
+        "new",     NEW;
+        "null",    NULL;
+        "return",  RETURN;
+        "ref",     REF;
+        "enum",    ENUM
       ];
     fun id ->
       match Hashtbl.find_opt kws id with
@@ -65,10 +68,12 @@ rule token = parse
 (* constantes entières *)
 | ("-")?['0'-'9']+ as i
                { ENTIER (int_of_string i) }
-(* identifiants et mots-clefs *)
+(* Identifiants standards (id) : commencent par une minuscule *)
 | ['a'-'z'](['A'-'Z''a'-'z''0'-'9']|"-"|"_")* as n
                { ident n }
-
+(* Identifiants de types ou membres d'enum (tid) : commencent par une majuscule *)
+| ['A'-'Z'](['A'-'Z''a'-'z''0'-'9']|"-"|"_")* as n
+               { TID n }
 (* fin de lecture *)
 | eof          { EOF }
 (* entrée non reconnue *)
