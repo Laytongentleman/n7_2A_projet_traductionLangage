@@ -1,0 +1,1 @@
+enum Jour { Lundi, Mardi, Lundi }  // Lundi est déclaré deux fois

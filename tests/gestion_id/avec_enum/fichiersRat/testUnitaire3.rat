@@ -1,0 +1,2 @@
+enum Etat { Actif, Inactif }
+enum Etat { Ouvert, Ferme }  // Etat déjà déclaré

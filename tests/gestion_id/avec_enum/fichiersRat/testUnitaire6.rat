@@ -1,0 +1,5 @@
+enum Couleur { Rouge, Vert, Bleu }
+
+test {
+    Rouge = Jaune;
+}
