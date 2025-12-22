@@ -6,6 +6,9 @@ type info =
   | InfoConst of string * int
   | InfoVar of string * typ * int * string
   | InfoFun of string * typ * typ list
+  | InfoParam of string * typ * bool 
+  | InfoEnum of string
+  | InfoEnumVal of string * string * int * string
 
 (* Données stockées dans la tds  et dans les AST : pointeur sur une information *)
 type info_ast = info ref  
@@ -280,13 +283,26 @@ let%test _ =
     chercherGlobalement tdsf "a" = None
 
 
-(* Convertie une info en une chaine de caractère - pour affichage *)
+(* Convertit une info en une chaîne de caractères - pour affichage *)
 let string_of_info info =
   match info with
-  | InfoConst (n,value) -> "Constante "^n^" : "^(string_of_int value)
-  | InfoVar (n,t,dep,base) -> "Variable "^n^" : "^(string_of_type t)^" "^(string_of_int dep)^"["^base^"]"
-  | InfoFun (n,t,tp) -> "Fonction "^n^" : "^(List.fold_right (fun elt tq -> if tq = "" then (string_of_type elt) else (string_of_type elt)^" * "^tq) tp "" )^
-                      " -> "^(string_of_type t)
+  | InfoConst (n, value) ->
+      "Constante "^n^" : "^(string_of_int value)
+  | InfoVar (n, t, dep, base) ->
+      "Variable "^n^" : "^(string_of_type t)^" @"^base^"+"^(string_of_int dep)
+  | InfoFun (n, t_ret, tp) ->
+      let params_str =
+        List.fold_right
+          (fun typ acc -> if acc = "" then string_of_type typ else string_of_type typ ^ " * " ^ acc)
+          tp ""
+      in
+      "Fonction "^n^" : ("^params_str^") -> "^(string_of_type t_ret)
+  | InfoParam (n, t, is_ref) ->
+      "Paramètre "^n^" : "^(string_of_type t)^ (if is_ref then " [ref]" else "")
+  | InfoEnum n ->
+      "Enum "^n
+  | InfoEnumVal (n, _, dep, base) ->
+      "Valeur Enum "^n^" @"^base^"+"^(string_of_int dep)
 
 (* Affiche la tds locale *)
 let afficher_locale tds =
