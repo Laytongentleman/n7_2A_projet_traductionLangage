@@ -1,0 +1,4 @@
+test {
+  const c = 4;
+  int* p = &c;     
+}

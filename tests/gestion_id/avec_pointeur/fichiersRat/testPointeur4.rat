@@ -1,0 +1,5 @@
+test {
+  int* p = (new int);
+  (*p) = 42;
+}
+
