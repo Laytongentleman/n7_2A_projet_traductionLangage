@@ -23,6 +23,9 @@ type unaire = Numerateur | Denominateur
 (* Opérateurs binaires de Rat *)
 type binaire = Fraction | Plus | Mult | Equ | Inf
 
+(* Définition d'un type énuméré : nom du type * liste des identifiants (membres) *)
+type enum_decl = Enum of string * string list
+
 (* Affectables de Rat *)
 type affectable =
   (* Accès à un identifiant représenté par son nom *) 
@@ -50,6 +53,10 @@ type expression =
   | Null
   (* Affectable  *)
   | Affectable of affectable 
+  (* Référence *)
+  | Ref of expression
+  (* Utilisation d'une valeur d'enum (ex: Lundi) *)
+  | EnumE of string
 
 
 (* Instructions de Rat *)
@@ -67,16 +74,23 @@ and instruction =
   | Conditionnelle of expression * bloc * bloc
   (*Boucle TantQue représentée par la conditin d'arrêt de la boucle et le bloc d'instructions *)
   | TantQue of expression * bloc
-  (* return d'une fonction *)
+  (* Return d'une fonction *)
   | Retour of expression
+  (* Return d'une procédure *)
+  | RetourVoid
+  (* Appel d'une procédure *)
+  | AppelProcedure of string * expression list
+
+(* Paramètre : (passage par référence ?, type, nom) *)
+type param = bool * typ * string
 
 (* Structure des fonctions de Rat *)
 (* type de retour - nom - liste des paramètres (association type et nom) - corps de la fonction *)
-type fonction = Fonction of typ * string * (typ * string) list * bloc
+type fonction = Fonction of typ * string * param list * bloc
 
 (* Structure d'un programme Rat *)
-(* liste de fonction - programme principal *)
-type programme = Programme of fonction list * bloc
+(* Enums - liste de fonctions - programme principal *)
+type programme = Programme of enum_decl list * fonction list * bloc
 
 end
 
@@ -86,16 +100,15 @@ end
 (* ********************************************* *)
 module AstTds =
 struct
+  (* Affectable existantes dans notre langage *)
+  type affectable = 
+    | Ident of Tds.info_ast 
+    | Deref of affectable 
 
   (* Expressions existantes dans notre langage *)
   (* ~ expression de l'AST syntaxique où les noms des identifiants ont été
   remplacés par les informations associées aux identificateurs *)
-
-type affectable = 
-  | Ident of Tds.info_ast 
-  | Deref of affectable 
-
-type expression =
+  type expression =
     | AppelFonction of Tds.info_ast * expression list
     | Booleen of bool
     | Entier of int
@@ -105,7 +118,6 @@ type expression =
     | Null 
     | Affectable of affectable
     | Adresse of Tds.info_ast
-
 
   (* instructions existantes dans notre langage *)
   (* ~ instruction de l'AST syntaxique où les noms des identifiants ont été
@@ -144,8 +156,8 @@ type unaire = Numerateur | Denominateur
 (* Opérateurs binaires existants dans Rat - résolution de la surcharge *)
 type binaire = Fraction | PlusInt | PlusRat | MultInt | MultRat | EquInt | EquBool | Inf
 
-
-
+(* Affectable existantes dans Rat *)
+(* = affectable de AstTds *)
 type affectable = Ident of Tds.info_ast | Deref of affectable 
 
 (* Expressions existantes dans Rat *)
@@ -159,7 +171,7 @@ type expression =
   | Binaire of binaire * expression * expression
   | New of typ 
   | Null 
-  | Affectable of affectable
+  | Affectable of Tds.info_ast
   | Adresse of Tds.info_ast
 
 (* instructions existantes Rat *)
