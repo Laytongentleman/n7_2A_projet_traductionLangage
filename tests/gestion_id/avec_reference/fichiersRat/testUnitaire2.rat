@@ -1,0 +1,3 @@
+void p(int a) {
+  a = 3;
+}

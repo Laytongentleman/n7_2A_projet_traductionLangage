@@ -1,0 +1,5 @@
+void g() { }
+
+void f(ref void g) {
+}
+

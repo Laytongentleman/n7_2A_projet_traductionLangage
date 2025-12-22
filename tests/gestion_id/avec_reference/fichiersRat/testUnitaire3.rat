@@ -1,0 +1,3 @@
+void p(ref int a) {
+  int* q = &a;
+}
