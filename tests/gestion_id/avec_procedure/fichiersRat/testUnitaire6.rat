@@ -1,3 +1,11 @@
+void p() {
+    print 1;
+}
+
+void p() {
+    print 2;
+}
+
 test {
-  p();
+    p();
 }

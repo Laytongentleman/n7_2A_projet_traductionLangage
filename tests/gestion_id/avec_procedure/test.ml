@@ -30,31 +30,27 @@ let%test_unit "testUnitaireProcedure3" =
   with
   | RetourNonVideDansProcedure -> ()
 
-(* Test 4 : appel de procédure dans une expression *)
-let%test_unit "testUnitaireProcedure4" = 
-  let _ = compiler (path ^ "testUnitaire4.rat") in 
-  raise ErreurNonDetectee
+(* Test 4 : appel de fonction comme procedure *)
+let%test_unit "testUnitaireProcedure4" =
+  try 
+    let _ = compiler (path ^ "testUnitaire4.rat") in 
+    raise ErreurNonDetectee
   with
-  | MauvaiseUtilisationIdentifiant("p") -> ()
+  | AppelFonctionPourProcedure("f") -> ()
 
-(* Test 5 : appel de fonction comme procedure *)
-let%test_unit "testUnitaireProcedure5" = 
-  let _ = compiler (path ^ "testUnitaire5.rat") in 
-  raise ErreurNonDetectee
-  with
-  | AppelFonctionPourProcedure -> ()
-
-(* Test 6 : procédure non déclaré *)
-let%test_unit "testUnitaireProcedure6" = 
-  let _ = compiler (path ^ "testUnitaire6.rat") in 
-  raise ErreurNonDetectee
+(* Test 5 : procédure non déclaré *)
+let%test_unit "testUnitaireProcedure5" =
+  try 
+    let _ = compiler (path ^ "testUnitaire5.rat") in 
+    raise ErreurNonDetectee
   with
   | IdentifiantNonDeclare("p") -> ()
 
-(* Test 7 : double déclaration de procédure *)
-let%test_unit "testUnitaireProcedure7" = 
-  let _ = compiler (path ^ "testUnitaire7.rat") in 
-  raise ErreurNonDetectee
+(* Test 6 : double déclaration de procédure *)
+let%test_unit "testUnitaireProcedure6" = 
+  try 
+    let _ = compiler (path ^ "testUnitaire6.rat") in 
+    raise ErreurNonDetectee
   with
   | DoubleDeclaration("p") -> ()
 

@@ -1,3 +1,7 @@
 void p() {
   return 1;
 }
+
+test {
+  int a = 1;
+}

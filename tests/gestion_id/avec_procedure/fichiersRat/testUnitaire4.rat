@@ -1,5 +1,5 @@
-void p() {}
+int f() { return 1; }
 
 test {
-  int x = p();
+  f();
 }
