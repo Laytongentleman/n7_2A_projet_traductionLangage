@@ -1,5 +1,6 @@
-enum Couleur { Rouge, Vert, Bleu }
+enum Etat { Ouvert, Fermer };
+enum Etat2 { Ouvert, Test };
 
 test {
-    Rouge = Jaune;
+    int a = 1;
 }

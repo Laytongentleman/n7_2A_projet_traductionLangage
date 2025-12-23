@@ -1,2 +1,6 @@
-enum Etat { Actif, Inactif }
-enum Etat { Ouvert, Ferme }  // Etat déjà déclaré
+enum Etat { Actif, Inactif };
+enum Etat { Ouvert, Ferme };  // Etat déjà déclaré
+
+test {
+    int a = 1;
+}

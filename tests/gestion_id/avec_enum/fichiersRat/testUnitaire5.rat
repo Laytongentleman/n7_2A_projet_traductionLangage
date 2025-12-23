@@ -1,4 +1,4 @@
-enum Couleur {Rouge,Vert,Bleu}
+enum Couleur {Rouge,Vert,Bleu};
 
 test {
     Couleur c = Rouge;

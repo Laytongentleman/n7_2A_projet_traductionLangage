@@ -24,7 +24,7 @@ let%test_unit "testUnitaireEnum2" =
     let _ = compiler (pathFichiersRat ^ "testUnitaire2.rat") in 
     raise ErreurNonDetectee
   with
-  | MauvaiseUtilisationIdentifiant("Lundi") -> ()
+  | DoubleDeclaration("Lundi") -> ()
 
 (* Test 3 : double déclaration d'énum *)
 let%test_unit "testUnitaireEnum3" =
@@ -32,7 +32,7 @@ let%test_unit "testUnitaireEnum3" =
     let _ = compiler (pathFichiersRat ^ "testUnitaire3.rat") in 
     raise ErreurNonDetectee
   with
-  | MauvaiseUtilisationIdentifiant("Etat") -> ()
+  | DoubleDeclaration("Etat") -> ()
 
 (* Test 4 : utilisation d'une valeur d'énum inexistante *)
 let%test_unit "testUnitaireEnum4" =
@@ -46,13 +46,13 @@ let%test_unit "testUnitaireEnum4" =
 let%test_unit "testUnitaireEnum5" = 
   let _ = compiler (pathFichiersRat^"testUnitaire5.rat") in ()
 
-(* Test 6 : écriture sur une valeur de enum *)
+(* Test 6 : deux valeurs identiques dans deux énumérations *)
 let%test_unit "testUnitaireEnum6" =
-  try 
+  try
     let _ = compiler (pathFichiersRat ^ "testUnitaire6.rat") in 
     raise ErreurNonDetectee
-  with
-  | MauvaiseUtilisationIdentifiant("Rouge")
+  with 
+  | DoubleDeclaration("Ouvert") -> ()
 
 
 (*
