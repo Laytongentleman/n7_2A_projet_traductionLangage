@@ -87,6 +87,7 @@ let rec analyse_tds_expression tds e =
       match info_ast_to_info info with 
       (* On ne peut que accéder à l'adresse d'une variable *)
       | InfoVar _ -> AstTds.Adresse info 
+      | InfoParam (_,_,true) -> AstTds.Adresse info 
       | _ -> raise (MauvaiseUtilisationIdentifiant id)
     end
   end
@@ -208,7 +209,7 @@ let rec analyse_tds_instruction tds oia i =
         match info_ast_to_info ia with 
         | InfoFun (_, t, _) -> 
           if t=Void then 
-            raise (RetourVideDansFonction)
+            raise (RetourNonVideDansProcedure)
           else 
             (* Analyse de l'expression *)
             let ne = analyse_tds_expression tds e in 
@@ -225,7 +226,7 @@ let rec analyse_tds_instruction tds oia i =
       | Some ia -> begin 
         match info_ast_to_info ia with 
         | InfoFun (_,t,_) -> 
-          if t=Void then AstTds.RetourVoid else raise (RetourNonVideDansProcedure)
+          if t=Void then AstTds.RetourVoid else raise (RetourVideDansFonction)
         | _ -> failwith "erreur interne" 
       end
     end
@@ -335,7 +336,9 @@ let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li)) =
   in
 
   (* Analyse du bloc de la fonction en passant l'information de la fonction *)
-  let blocTds = analyse_tds_bloc tdsFille (Some nTds) li in
+  let blocTds =
+    List.map (analyse_tds_instruction tdsFille (Some nTds)) li
+  in
 
   (* Retourne la représentation AstTds de la fonction *)
   AstTds.Fonction (t, nTds, lpTds , blocTds)

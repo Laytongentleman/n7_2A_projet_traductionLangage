@@ -1,3 +1,7 @@
 void p(ref int a) {
   int* q = &a;
 }
+
+test {
+  int c = 2;
+}

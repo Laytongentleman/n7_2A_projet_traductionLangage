@@ -31,7 +31,7 @@ struct
   type t1 = Ast.AstTds.programme
   type t2 =  Ast.AstType.programme
 
-  let analyser _ =  Ast.AstType.Programme([],[])
+  let analyser _ =  Ast.AstType.Programme([],[],[])
 
 end
 

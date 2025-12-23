@@ -2,3 +2,6 @@ void f(ref int a) {
   int a = 3;
 }
 
+test {
+  int b = 2;
+}

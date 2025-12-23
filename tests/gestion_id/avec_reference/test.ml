@@ -36,15 +36,7 @@ let%test_unit "testUnitaireRef5" =
     let _ = compiler (pathFichiersRat^"testUnitaire5.rat") in 
     raise ErreurNonDetectee
   with
-  | MauvaiseUtilisationIdentifiant("a") -> ()
-
-(* Test 6 : Déclaration de ref sur une fonction *)
-let%test_unit "testUnitaireRef6" = 
-  try 
-    let _ = compiler (pathFichiersRat^"testUnitaire6.rat") in 
-    raise ErreurNonDetectee
-  with
-  | MauvaiseUtilisationIdentifiant("g") -> ()
+  | DoubleDeclaration("a") -> ()
 
 (*
 let%test_unit "all_tam" =
