@@ -5,6 +5,7 @@ module type Ast =
 sig
    type affectable
    type expression
+   type enum_decl
    type instruction
    type fonction
    type programme
@@ -143,8 +144,7 @@ struct
   type fonction = Fonction of typ * Tds.info_ast * (typ * Tds.info_ast ) list * bloc
 
   (* Strcuture des énumérations *)
-  type enum_decl =
-    | Enum of Tds.info_ast * Tds.info_ast list
+  type enum_decl = Enum of Tds.info_ast * Tds.info_ast list
 
   (* Structure d'un programme dans notre langage *)
   type programme = Programme of enum_decl list * fonction list * bloc
@@ -179,7 +179,7 @@ type expression =
   | Binaire of binaire * expression * expression
   | New of typ 
   | Null 
-  | Affectable of Tds.info_ast
+  | Affectable of affectable
   | Adresse of Tds.info_ast
   | Ref of expression
   | EnumE of Tds.info_ast
@@ -198,12 +198,19 @@ type bloc = instruction list
   | TantQue of expression * bloc
   | Retour of expression * Tds.info_ast
   | Empty (* les nœuds ayant disparus: Const *)
+  | RetourVoid
+  | AppelProcedure of Tds.info_ast * expression list 
 
 (* informations associées à l'identificateur (dont son nom), liste des paramètres, corps *)
-type fonction = Fonction of Tds.info_ast * Tds.info_ast list * bloc
+type fonction =
+  | Fonction of Tds.info_ast * Tds.info_ast list * bloc
+  | Procedure of Tds.info_ast * Tds.info_ast list * bloc
+
+(* Strcuture des énumérations *)
+type enum_decl = Enum of Tds.info_ast * Tds.info_ast list
 
 (* Structure d'un programme dans notre langage *)
-type programme = Programme of fonction list * bloc
+type programme = Programme of enum_decl list * fonction list * bloc
 
 end
 
