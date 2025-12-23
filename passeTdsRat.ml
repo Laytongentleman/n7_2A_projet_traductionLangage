@@ -226,7 +226,7 @@ let rec analyse_tds_instruction tds oia i =
       | Some ia -> begin 
         match info_ast_to_info ia with 
         | InfoFun (_,t,_) -> 
-          if t=Void then AstTds.RetourVoid else raise (RetourVideDansFonction)
+          if t=Void then (AstTds.RetourVoid ia) else raise (RetourVideDansFonction)
         | _ -> failwith "erreur interne" 
       end
     end

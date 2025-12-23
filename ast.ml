@@ -135,7 +135,7 @@ struct
     | TantQue of expression * bloc
     | Retour of expression * Tds.info_ast  (* les informations sur la fonction à laquelle est associé le retour *)
     | Empty (* les nœuds ayant disparus: Const *)
-    | RetourVoid
+    | RetourVoid of Tds.info_ast
     | AppelProcedure of Tds.info_ast * expression list
 
 
@@ -162,7 +162,7 @@ struct
 type unaire = Numerateur | Denominateur 
 
 (* Opérateurs binaires existants dans Rat - résolution de la surcharge *)
-type binaire = Fraction | PlusInt | PlusRat | MultInt | MultRat | EquInt | EquBool | Inf
+type binaire = Fraction | PlusInt | PlusRat | MultInt | MultRat | EquInt | EquBool | Inf | EquEnum
 
 (* Affectable existantes dans Rat *)
 (* = affectable de AstTds *)
@@ -172,7 +172,6 @@ type affectable = Ident of Tds.info_ast | Deref of affectable
 (* = expression de AstTds *)
 type expression =
   | AppelFonction of Tds.info_ast * expression list
-  | Ident of Tds.info_ast
   | Booleen of bool
   | Entier of int
   | Unaire of unaire * expression
@@ -198,7 +197,7 @@ type bloc = instruction list
   | TantQue of expression * bloc
   | Retour of expression * Tds.info_ast
   | Empty (* les nœuds ayant disparus: Const *)
-  | RetourVoid
+  | RetourVoid of Tds.info_ast
   | AppelProcedure of Tds.info_ast * expression list 
 
 (* informations associées à l'identificateur (dont son nom), liste des paramètres, corps *)
