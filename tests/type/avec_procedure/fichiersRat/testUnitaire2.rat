@@ -1,0 +1,8 @@
+void p(int a) {
+  int b = a;
+  return;
+}
+
+test {
+    int c = 1;
+}

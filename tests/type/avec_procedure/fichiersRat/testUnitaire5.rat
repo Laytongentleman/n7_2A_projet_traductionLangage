@@ -1,0 +1,7 @@
+void p(int a) { 
+    return;
+}
+
+test {
+  p(3, 4); // erreur attendue : trop de paramètres
+}
