@@ -1,0 +1,7 @@
+enum Couleur { Rouge, Vert, Bleu };
+
+test {
+  Couleur c1 = Rouge;
+  Couleur c2 = Vert;
+  c1 = c2;
+}

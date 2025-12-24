@@ -1,0 +1,5 @@
+enum Couleur { Rouge, Vert };
+
+test {
+  int x = Rouge;
+}

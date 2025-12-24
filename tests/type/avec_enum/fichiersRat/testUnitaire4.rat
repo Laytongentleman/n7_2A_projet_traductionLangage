@@ -1,0 +1,6 @@
+enum Couleur { Rouge, Vert };
+enum Taille { Petit, Grand };
+
+test {
+  bool b = (Rouge = Petit);
+}
