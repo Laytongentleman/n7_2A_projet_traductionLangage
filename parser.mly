@@ -111,7 +111,7 @@ e :
 | NULL                    {Null}
 | PO NEW t=typ PF         {New t}
 | ADRESSE n=ID            {Adresse n}
-| REF e1=e                {Ref e1}
+| REF n=ID                {Ref n}
 | n=TID                   {EnumE n}
 
 

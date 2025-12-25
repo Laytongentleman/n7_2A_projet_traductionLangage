@@ -28,6 +28,9 @@ let rec analyse_tds_affectable tds a ecriture =
         | InfoConst _ ->
           if ecriture then raise (MauvaiseUtilisationIdentifiant str)
           else AstTds.Ident info
+        | InfoEnumVal _ -> 
+          if ecriture then raise (MauvaiseUtilisationIdentifiant str)
+          else AstTds.Ident info
         (* Une fonction n'est pas affectable *)
         | _ -> raise (MauvaiseUtilisationIdentifiant str)
      end
@@ -109,10 +112,16 @@ let rec analyse_tds_expression tds e =
   (* Gestion de null *)
   | AstSyntax.Null -> AstTds.Null
   (* Gestion des références *)
-  | AstSyntax.Ref e ->
-    (* Analyse de son expression *)
-    let ne = analyse_tds_expression tds e in
-    AstTds.Ref ne
+  | AstSyntax.Ref id -> begin 
+    (* Vérification de l'existence de id *)
+    match chercherLocalement tds id with 
+    | None -> raise (IdentifiantNonDeclare id) 
+    | Some info  -> begin 
+      match info_ast_to_info info with 
+      |InfoVar _ -> AstTds.Ref info 
+      | _ -> raise (MauvaiseUtilisationIdentifiant id)
+    end
+  end
   (* Gestion de l'utilisation d'une valeur enum *) 
   | AstSyntax.EnumE n -> begin
     match Tds.chercherGlobalement tds n with 
