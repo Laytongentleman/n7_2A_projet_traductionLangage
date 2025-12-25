@@ -55,7 +55,7 @@ type expression =
   (* Affectable  *)
   | Affectable of affectable 
   (* Référence *)
-  | Ref of expression
+  | Ref of string
   (* Utilisation d'une valeur d'enum (ex: Lundi) *)
   | EnumE of string
 
@@ -119,7 +119,7 @@ struct
     | Null 
     | Affectable of affectable
     | Adresse of Tds.info_ast
-    | Ref of expression
+    | Ref of Tds.info_ast
     | EnumE of Tds.info_ast
 
   (* instructions existantes dans notre langage *)
@@ -180,7 +180,7 @@ type expression =
   | Null 
   | Affectable of affectable
   | Adresse of Tds.info_ast
-  | Ref of expression
+  | Ref of Tds.info_ast
   | EnumE of Tds.info_ast
 
 (* instructions existantes Rat *)
