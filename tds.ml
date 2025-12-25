@@ -5,8 +5,7 @@ open Type
 type info =
   | InfoConst of string * int
   | InfoVar of string * typ * int * string
-  | InfoFun of string * typ * typ list
-  | InfoParam of string * typ * bool 
+  | InfoFun of string * typ * (typ * bool) list
   | InfoEnum of string
   | InfoEnumVal of string * string * int * string
 
@@ -290,15 +289,19 @@ let string_of_info info =
       "Constante "^n^" : "^(string_of_int value)
   | InfoVar (n, t, dep, base) ->
       "Variable "^n^" : "^(string_of_type t)^" @"^base^"+"^(string_of_int dep)
-  | InfoFun (n, t_ret, tp) ->
+  | InfoFun (n, t_ret, params) ->
       let params_str =
         List.fold_right
-          (fun typ acc -> if acc = "" then string_of_type typ else string_of_type typ ^ " * " ^ acc)
-          tp ""
+          (fun (typ, is_ref) acc ->
+            let param_str =
+              (if is_ref then "ref " else "") ^ string_of_type typ
+            in
+            if acc = "" then param_str else param_str ^ " * " ^ acc
+          )
+          params
+          ""
       in
-      "Fonction "^n^" : ("^params_str^") -> "^(string_of_type t_ret)
-  | InfoParam (n, t, is_ref) ->
-      "Paramètre "^n^" : "^(string_of_type t)^ (if is_ref then " [ref]" else "")
+      "Fonction " ^ n ^ " : (" ^ params_str ^ ") -> " ^ string_of_type t_ret
   | InfoEnum n ->
       "Enum "^n
   | InfoEnumVal (n, _, dep, base) ->
@@ -335,17 +338,19 @@ let%test _ =
   | _ -> false
  
 (* Modifie les types de retour et des paramètres si c'est une InfoFun, ne fait rien sinon *)
-let modifier_type_fonction t tp i =
-       match !i with
-       | InfoFun(n,_,_) -> i:= InfoFun(n,t,tp)
-       | _ -> failwith "Appel modifier_type_fonction pas sur un InfoFun"
+let modifier_type_fonction t_ret params ia =
+  match !ia with
+  | InfoFun (n, _, _) ->
+      ia := InfoFun (n, t_ret, params)
+  | _ ->
+      failwith "modifier_type_fonction : info non fonction"
 
 let%test _ = 
   let info = InfoFun ("f", Undefined, []) in
   let ia = info_to_info_ast info in
-  modifier_type_fonction Rat [Int ; Int] ia;
+  modifier_type_fonction Rat [ (Int,false) ; (Int,false) ] ia;
   match info_ast_to_info ia with
-  | InfoFun ("f", Rat, [Int ; Int]) -> true
+  | InfoFun ("f", Rat, [ (Int,false) ; (Int,false)]) -> true
   | _ -> false
  
 (* Modifie l'emplacement (dépl, registre) si c'est une InfoVar, ne fait rien sinon *)

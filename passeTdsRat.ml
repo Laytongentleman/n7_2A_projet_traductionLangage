@@ -23,7 +23,6 @@ let rec analyse_tds_affectable tds a ecriture =
         match info_ast_to_info info with
         (* On peut écrire et lire une variable *) 
         | InfoVar _  -> AstTds.Ident info
-        | InfoParam _ -> AstTds.Ident info
           (* On peut seulement lire une constante *)
         | InfoConst _ ->
           if ecriture then raise (MauvaiseUtilisationIdentifiant str)
@@ -90,7 +89,6 @@ let rec analyse_tds_expression tds e =
       match info_ast_to_info info with 
       (* On ne peut que accéder à l'adresse d'une variable *)
       | InfoVar _ -> AstTds.Adresse info 
-      | InfoParam (_,_,true) -> AstTds.Adresse info 
       | _ -> raise (MauvaiseUtilisationIdentifiant id)
     end
   end
@@ -318,39 +316,53 @@ let analyse_tds_enum tds (AstSyntax.Enum (nom_enum, membres)) =
 (* Vérifie la bonne utilisation des identifiants et tranforme la fonction
 en une fonction de type AstTds.fonction *)
 (* Erreur si mauvaise utilisation des identifiants *)
-let analyse_tds_fonction maintds (AstSyntax.Fonction(t,n,lp,li)) =
-  (* On crée l'information associée à la fonction et on l'ajoute dans la TDS mère *)
-  let info_fun = InfoFun (n, t, List.map (fun (_, typ, _) -> typ) lp) in
-  let nTds = info_to_info_ast info_fun in
-  (* Vérification de l'existence préalable de la fonction dans la TDS mère *)
-  (match chercherGlobalement maintds n with
-  | None -> ajouter maintds n nTds
-  | Some _ -> raise (DoubleDeclaration n));
+let analyse_tds_fonction maintds (AstSyntax.Fonction (t, n, lp, li)) =
+  (* Création de l'information de fonction :
+     on mémorise les types + le booléen ref *)
+  let info_fun =
+    InfoFun (n, t, List.map (fun (is_ref, typ, _) -> (typ, is_ref)) lp)
+  in
+  let ia_fun = info_to_info_ast info_fun in
 
-  (* Création d'une tds fille pour le corps de la fonction *)
+  (* Vérification double déclaration *)
+  begin
+    match chercherGlobalement maintds n with
+    | None -> ajouter maintds n ia_fun
+    | Some _ -> raise (DoubleDeclaration n)
+  end;
+
+  (* Création de la TDS fille *)
   let tdsFille = creerTDSFille maintds in
 
-  (* Analyse des paramètres *)
+  (* Ajout des paramètres comme InfoVar *)
   let lpTds =
-    List.map (fun (is_ref, typ, name) ->
-      (* Création de l'info pour le paramètre avec le booléen de passage par référence *)
-      let info_param = InfoParam (name, typ, is_ref) in
-      let ia_param = info_to_info_ast info_param in
-      (* Vérification des doublons dans la TDS fille *)
-      (match Tds.chercherLocalement tdsFille name with
-      | None -> Tds.ajouter tdsFille name ia_param
-      | Some _ -> raise (DoubleDeclaration name));
-      (typ, ia_param)
-    ) lp
+    List.map
+      (fun (is_ref, typ, name) ->
+         (* Si paramètre ref → on stocke un pointeur *)
+         let t_var =
+           if is_ref then Type.Pointeur typ else typ
+         in
+         let info_var = InfoVar (name, t_var, 0, "param") in
+         let ia_var = info_to_info_ast info_var in
+
+         begin
+           match Tds.chercherLocalement tdsFille name with
+           | None -> Tds.ajouter tdsFille name ia_var
+           | Some _ -> raise (DoubleDeclaration name)
+         end;
+
+         (typ, ia_var)
+      )
+      lp
   in
 
-  (* Analyse du bloc de la fonction en passant l'information de la fonction *)
+  (* Analyse du corps *)
   let blocTds =
-    List.map (analyse_tds_instruction tdsFille (Some nTds)) li
+    List.map (analyse_tds_instruction tdsFille (Some ia_fun)) li
   in
 
-  (* Retourne la représentation AstTds de la fonction *)
-  AstTds.Fonction (t, nTds, lpTds , blocTds)
+  AstTds.Fonction (t, ia_fun, lpTds, blocTds)
+
 
 (* analyser : AstSyntax.programme -> AstTds.programme *)
 (* Paramètre : le programme à analyser *)
