@@ -1,0 +1,8 @@
+void f(ref int a) {
+    a = 2;
+    return;
+}
+
+test {
+    f(ref x);
+}

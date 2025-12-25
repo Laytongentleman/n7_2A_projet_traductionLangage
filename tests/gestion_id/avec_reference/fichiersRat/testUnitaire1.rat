@@ -1,5 +1,6 @@
 void p(ref int a) {
   a = 3;
+  return;
 }
 
 test {

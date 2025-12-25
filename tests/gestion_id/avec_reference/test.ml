@@ -38,6 +38,18 @@ let%test_unit "testUnitaireRef5" =
   with
   | DoubleDeclaration("a") -> ()
 
+(* Test 6 : Appel d'une procédure avec ref *)
+let%test_unit "testUnitaireRef6" = 
+  let _ = compiler (pathFichiersRat^"testUnitaire6.rat") in ()
+
+(* Test 7 : Appel d'une procédure avec ref non déclaré*)
+let%test_unit "testUnitaireRef7" = 
+  try 
+    let _ = compiler (pathFichiersRat^"testUnitaire7.rat") in 
+    raise ErreurNonDetectee
+  with
+  | IdentifiantNonDeclare _ -> ()
+
 (*
 let%test_unit "all_tam" =
   let p_tam = "../../../../../tests/tam/avec_reference/fichiersRat/" in
