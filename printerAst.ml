@@ -66,7 +66,7 @@ struct
     | New t -> "(new " ^ (string_of_type t) ^ ") "
     | Null -> "NULL "
     | Adresse s -> "& " ^ s^" " 
-    | Ref e1 -> "ref " ^ (string_of_expression e1)
+    | Ref id -> "ref " ^ id
     | EnumE s -> s ^ " "
     | Binaire (b,e1,e2) ->
         begin
