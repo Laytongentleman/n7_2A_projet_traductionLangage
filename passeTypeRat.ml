@@ -166,38 +166,36 @@ let rec analyse_type_expression e =
     | InfoEnumVal (_, enum_name,_,_) -> (AstType.EnumE info, Type.Tid enum_name)
     | _ -> failwith "erreur interne : EnumE mal typé"
   end
-  | AstTds.Ref expr -> begin
-    (* ref e : prise d’adresse contrôlée *)
-    let (ne, te) = analyse_type_expression expr in
-    (* ref doit porter sur une affectable *)
-    match expr with
-    | AstTds.Affectable _ ->
-        if te = Type.Void then
-          raise TypeVoidInattendu
-        else
-          (AstType.Ref ne, Type.Pointeur te)
-    | _ -> failwith "erreur interne : ref sur une expression non-affectable"
-  end
+  | AstTds.Ref info ->
+    begin
+      match info_ast_to_info info with
+      | InfoVar (_, t, _,_) ->
+          (AstType.Ref info, t)
+      | _ ->
+          failwith "ref appliqué à quelque chose qui n'est pas une variable"
+    end
   | AstTds.AppelFonction (info, le) -> begin
-    (* Analyse des expressions passées en arguments *)
-    let analysed_args = List.map analyse_type_expression le in
-    let (nle, lte) = List.split analysed_args in
+    (* Analyse typée des arguments *)
+    let l = List.map analyse_type_expression le in
+    let (nle, lte) = List.split l in
+
     match info_ast_to_info info with
     | InfoFun (_, tret, tparams) ->
         (* Vérification du nombre de paramètres *)
         if List.length lte <> List.length tparams then
           raise (TypesParametresInattendus (tparams, lte))
         else begin
-          (* Vérification de compatibilité type à type *)
+          (* Vérification type à type *)
           List.iter2
-            (fun targ tparam ->
-               if not (est_compatible targ tparam) then
-                 raise (TypeInattendu (targ, tparam))
+            (fun t_arg t_param ->
+               if not (est_compatible t_arg t_param) then
+                 raise (TypesParametresInattendus (lte, tparams))
             )
             lte tparams;
+
           (AstType.AppelFonction (info, nle), tret)
         end
-    | _ -> failwith "analyse_type_expression : appel sur un identifiant non fonction"
+    | _ -> failwith "erreur interne"
   end
 
 
@@ -212,7 +210,7 @@ let rec analyse_type_instruction i =
     (* Analyse de l’expression d’initialisation *)
     let (ne, te) = analyse_type_expression e in
     (* Le type de l’expression doit correspondre au type déclaré *)
-    if te = t then (
+    if est_compatible te t then (
       (* On fixe définitivement le type de la variable dans la TDS *)
       modifier_type_variable t info;
       AstType.Declaration (info, ne)

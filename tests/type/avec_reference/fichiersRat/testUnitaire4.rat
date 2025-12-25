@@ -1,0 +1,8 @@
+void p(ref int a) {
+    return;
+}
+
+test {
+  bool b = true;
+  p(ref b);
+}

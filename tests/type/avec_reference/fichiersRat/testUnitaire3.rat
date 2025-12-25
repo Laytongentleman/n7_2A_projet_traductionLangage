@@ -1,0 +1,11 @@
+enum Couleur { Rouge, Vert }
+
+void p(ref Couleur c) {
+  c = Rouge;
+  return;
+}
+
+test {
+  Couleur x = Vert;
+  p(ref x);
+}

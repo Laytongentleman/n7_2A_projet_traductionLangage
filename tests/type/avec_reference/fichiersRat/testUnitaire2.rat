@@ -1,0 +1,8 @@
+int f(ref int a) {
+  return a;
+}
+
+test {
+  int x = 5;
+  int y = f(ref x);
+}
