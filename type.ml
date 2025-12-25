@@ -11,13 +11,19 @@ let rec string_of_type t =
   | Undefined -> "Undefined"
 
 
-let est_compatible t1 t2 =
+let rec est_compatible t1 t2 =
   match t1, t2 with
   | Bool, Bool -> true
   | Int, Int -> true
   | Rat, Rat -> true
-  | Tid n1, Tid n2 -> n1 = n2 (* Permet des intructions tel que Couleur c = Bleu *)
-  | _ -> false 
+  (* null : pointeur(Undefined) est compatible avec tout pointeur *)
+  | Pointeur Undefined, Pointeur _ -> true
+  (* compatibilité récursive des pointeurs *)
+  | Pointeur x, Pointeur y -> est_compatible x y
+  (* énumérations : même enum *)
+  | Tid n1, Tid n2 -> n1 = n2
+  | _ -> false
+
 
 let%test _ = est_compatible Bool Bool
 let%test _ = est_compatible Int Int
