@@ -60,25 +60,31 @@ let rec analyse_tds_expression tds e =
       let ne2 = analyse_tds_expression tds expr2Tds in 
       AstTds.Binaire (op, ne1, ne2)
   (* Gestion de l'appel de fonction *)
-  | AstSyntax.AppelFonction (id, le) ->
-    (* Cherche l'existence de la fonction dans la TDS globale *)
-    begin
-      match Tds.chercherGlobalement tds id with
-      | None ->
-          (* La fonction n'existe pas *)
-          raise (IdentifiantNonDeclare id)
-      | Some info_ast ->
-          begin
-            match info_ast_to_info info_ast with
-            | InfoFun (_, _, _) ->
-                (* Analyse de tous les arguments de l'appel *)
-                let leTds = List.map (analyse_tds_expression tds) le in
-                (* Construction de l'AST TDS pour l'appel de fonction *)
-                AstTds.AppelFonction (info_ast, leTds)
-            | _ ->
-                (* On appelle quelque chose qui n'est pas une fonction *)
-                raise (MauvaiseUtilisationIdentifiant id)
-          end
+  | AstSyntax.AppelFonction (id, le) -> begin
+          match Tds.chercherGlobalement tds id with
+          | None -> raise (IdentifiantNonDeclare id)
+          | Some info_ast -> begin
+              match info_ast_to_info info_ast with
+              | InfoFun (_, t, params) when t<>Void ->
+                  (* vérification du nombre d'arguments *)
+                  if List.length le <> List.length params then
+                    raise (NombreParametresInattendus id);
+                  (* vérification ref / non-ref *)
+                  List.iter2
+                    (fun arg (_, is_ref) ->
+                      match arg, is_ref with
+                      | AstSyntax.Ref _, true -> ()
+                      | AstSyntax.Ref _, false -> raise (ParametreNonRef id)
+                      | _, true -> raise (ParametreRefAttendu id)
+                      | _, false -> ()
+                    )
+                    le params;
+                  (* analyse TDS des expressions *)
+                  let args_tds = List.map (analyse_tds_expression tds) le in
+                  AstTds.AppelFonction (info_ast, args_tds)
+              | InfoFun (_, Void, _) -> raise (AppelProcedurePourFonction id)
+              | _ -> raise (MauvaiseUtilisationIdentifiant id)
+      end
     end
   (* Gestion des appel à une adresse avec & *)
   | AstSyntax.Adresse id -> begin
@@ -237,19 +243,32 @@ let rec analyse_tds_instruction tds oia i =
         | _ -> failwith "erreur interne" 
       end
     end
-  | AstSyntax.AppelProcedure (n,lp) -> begin
-    (* On cherche l'existence de la procédure *)
+  | AstSyntax.AppelProcedure (n, lp) -> begin
     match Tds.chercherGlobalement tds n with
     | None -> raise (IdentifiantNonDeclare n)
-    | Some info_ast ->
-        begin match info_ast_to_info info_ast with
-        | InfoFun (_, t, _) when t = Void ->
+    | Some info_ast -> begin
+        match info_ast_to_info info_ast with
+        | InfoFun (_, Void, params) ->
+            (* vérification du nombre d'arguments *)
+            if List.length lp <> List.length params then
+              raise (NombreParametresInattendus n);
+            (* vérification ref / non-ref *)
+            List.iter2
+              (fun arg (_, is_ref) ->
+                 match arg, is_ref with
+                 | AstSyntax.Ref _, true -> ()
+                 | AstSyntax.Ref _, false -> raise (ParametreNonRef n)
+                 | _, true -> raise (ParametreRefAttendu n)
+                 | _, false -> ()
+              )
+              lp params;
+            (* analyse TDS des expressions *)
             let args_tds = List.map (analyse_tds_expression tds) lp in
             AstTds.AppelProcedure (info_ast, args_tds)
         | InfoFun (_, _, _) -> raise (AppelFonctionPourProcedure n)
-        | _ -> failwith "erreur interne"
-        end
-      end
+        | _ -> raise (MauvaiseUtilisationIdentifiant n)
+    end
+  end
 
 (* analyse_tds_bloc : tds -> info_ast option -> AstSyntax.bloc -> AstTds.bloc *)
 (* Paramètre tds : la table des symboles courante *)

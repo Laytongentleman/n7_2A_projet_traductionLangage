@@ -5,6 +5,9 @@ open Ast.AstSyntax
 exception DoubleDeclaration of string 
 exception IdentifiantNonDeclare of string 
 exception MauvaiseUtilisationIdentifiant of string 
+exception NombreParametresInattendus of string
+exception ParametreRefAttendu of string
+exception ParametreNonRef of string
 
 (* Exceptions pour le typage *)
 exception TypeInattendu of typ * typ     (* Le premier type est le type réel, le second est le type attendu *)
@@ -22,6 +25,7 @@ exception ValeurEnumInexistante of string
 exception RetourVideDansFonction
 exception RetourNonVideDansProcedure
 exception AppelFonctionPourProcedure of string
+exception AppelProcedurePourFonction of string
 
 (* Utilisation illégale de return dans le programme principal *)
 exception RetourDansMain

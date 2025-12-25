@@ -50,6 +50,30 @@ let%test_unit "testUnitaireRef7" =
   with
   | IdentifiantNonDeclare _ -> ()
 
+(* Test 8 : Appel d'une fonction en oubliant des paramètres *)
+let%test_unit "testUnitaireRef8" =
+  try 
+    let _ = compiler (pathFichiersRat ^"testUnitaire8.rat") in
+    raise ErreurNonDetectee
+  with
+  |NombreParametresInattendus _ -> () 
+
+(* Test 9 : Appel d'une fonction sans mettre ref *)
+let%test_unit "testUnitaireRef9" =
+  try 
+    let _ = compiler (pathFichiersRat ^"testUnitaire9.rat") in
+    raise ErreurNonDetectee
+  with
+  |ParametreRefAttendu _ -> () 
+
+(* Test 10 : Appel d'une fonction en mettant ref alors qu'il faut pas *)
+let%test_unit "testUnitaireRef10" =
+  try 
+    let _ = compiler (pathFichiersRat ^"testUnitaire10.rat") in
+    raise ErreurNonDetectee
+  with
+  |ParametreNonRef _ -> () 
+
 (*
 let%test_unit "all_tam" =
   let p_tam = "../../../../../tests/tam/avec_reference/fichiersRat/" in
