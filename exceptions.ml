@@ -13,6 +13,7 @@ exception TypeBinaireInattendu of binaire * typ * typ      (* les types réels n
 exception TypeVoidInattendu 
 exception DereferencementIllegal
 exception MauvaiseUtilisationRef
+exception DoitEtreRef
 
 (* Exceptions pour les énumérations *)
 exception ValeurEnumInexistante of string
