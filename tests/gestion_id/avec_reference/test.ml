@@ -50,29 +50,19 @@ let%test_unit "testUnitaireRef7" =
   with
   | IdentifiantNonDeclare _ -> ()
 
+(* Tests qui passe la tds mais pas le typage *)
 (* Test 8 : Appel d'une fonction en oubliant des paramètres *)
 let%test_unit "testUnitaireRef8" =
-  try 
-    let _ = compiler (pathFichiersRat ^"testUnitaire8.rat") in
-    raise ErreurNonDetectee
-  with
-  |NombreParametresInattendus _ -> () 
+    let _ = compiler (pathFichiersRat ^"testUnitaire8.rat") in ()
 
 (* Test 9 : Appel d'une fonction sans mettre ref *)
 let%test_unit "testUnitaireRef9" =
-  try 
-    let _ = compiler (pathFichiersRat ^"testUnitaire9.rat") in
-    raise ErreurNonDetectee
-  with
-  |ParametreRefAttendu _ -> () 
+    let _ = compiler (pathFichiersRat ^"testUnitaire9.rat") in ()
 
 (* Test 10 : Appel d'une fonction en mettant ref alors qu'il faut pas *)
 let%test_unit "testUnitaireRef10" =
-  try 
-    let _ = compiler (pathFichiersRat ^"testUnitaire10.rat") in
-    raise ErreurNonDetectee
-  with
-  |ParametreNonRef _ -> () 
+    let _ = compiler (pathFichiersRat ^"testUnitaire10.rat") in () 
+
 
 (*
 let%test_unit "all_tam" =

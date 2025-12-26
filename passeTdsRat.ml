@@ -65,23 +65,10 @@ let rec analyse_tds_expression tds e =
           | None -> raise (IdentifiantNonDeclare id)
           | Some info_ast -> begin
               match info_ast_to_info info_ast with
-              | InfoFun (_, t, params) when t<>Void ->
-                  (* vérification du nombre d'arguments *)
-                  if List.length le <> List.length params then
-                    raise (NombreParametresInattendus id);
-                  (* vérification ref / non-ref *)
-                  List.iter2
-                    (fun arg (_, is_ref) ->
-                      match arg, is_ref with
-                      | AstSyntax.Ref _, true -> ()
-                      | AstSyntax.Ref _, false -> raise (ParametreNonRef id)
-                      | _, true -> raise (ParametreRefAttendu id)
-                      | _, false -> ()
-                    )
-                    le params;
-                  (* analyse TDS des expressions *)
-                  let args_tds = List.map (analyse_tds_expression tds) le in
-                  AstTds.AppelFonction (info_ast, args_tds)
+              | InfoFun (_, t, _) when t<>Void -> 
+                (* analyse TDS des expressions *)
+                let args_tds = List.map (analyse_tds_expression tds) le in
+                AstTds.AppelFonction (info_ast, args_tds)
               | InfoFun (_, Void, _) -> raise (AppelProcedurePourFonction id)
               | _ -> raise (MauvaiseUtilisationIdentifiant id)
       end
@@ -248,20 +235,7 @@ let rec analyse_tds_instruction tds oia i =
     | None -> raise (IdentifiantNonDeclare n)
     | Some info_ast -> begin
         match info_ast_to_info info_ast with
-        | InfoFun (_, Void, params) ->
-            (* vérification du nombre d'arguments *)
-            if List.length lp <> List.length params then
-              raise (NombreParametresInattendus n);
-            (* vérification ref / non-ref *)
-            List.iter2
-              (fun arg (_, is_ref) ->
-                 match arg, is_ref with
-                 | AstSyntax.Ref _, true -> ()
-                 | AstSyntax.Ref _, false -> raise (ParametreNonRef n)
-                 | _, true -> raise (ParametreRefAttendu n)
-                 | _, false -> ()
-              )
-              lp params;
+        | InfoFun (_, Void, _) ->
             (* analyse TDS des expressions *)
             let args_tds = List.map (analyse_tds_expression tds) lp in
             AstTds.AppelProcedure (info_ast, args_tds)
