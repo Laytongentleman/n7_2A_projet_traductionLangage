@@ -1,4 +1,4 @@
-enum Couleur { Rouge, Vert }
+enum Couleur { Rouge, Vert };
 
 void p(ref Couleur c) {
   c = Rouge;

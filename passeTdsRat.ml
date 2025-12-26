@@ -330,12 +330,9 @@ let analyse_tds_fonction maintds (AstSyntax.Fonction (t, n, lp, li)) =
   (* Ajout des paramètres comme InfoVar *)
   let lpTds =
     List.map
-      (fun (is_ref, typ, name) ->
+      (fun (_, typ, name) ->
          (* Si paramètre ref → on stocke un pointeur *)
-         let t_var =
-           if is_ref then Type.Pointeur typ else typ
-         in
-         let info_var = InfoVar (name, t_var, 0, "param") in
+         let info_var = InfoVar (name, typ, 0, "param") in
          let ia_var = info_to_info_ast info_var in
 
          begin

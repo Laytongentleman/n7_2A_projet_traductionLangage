@@ -8,7 +8,7 @@ exception ErreurNonDetectee
 (** Chemin d'accès aux fichiers de test *)
 (****************************************)
 
-let path = "../../../../../tests/type/avec_procedure/fichiersRat/"
+let path = "../../../../../tests/type/avec_reference/fichiersRat/"
 
 (**********)
 (*  TESTS *)
@@ -40,4 +40,20 @@ let%test_unit "testReferenceType5" =
     let _ = compiler (path ^ "testUnitaire5.rat") in
     raise ErreurNonDetectee 
   with
-  | TypesParametresInattendus _ -> ()
+  | TypeInattendu _ -> ()
+
+(* Test 6 : oubli de ref dans l'appel *)
+let%test_unit "testReferenceType6" = 
+  try 
+    let _ = compiler (path ^ "testUnitaire6.rat") in
+    raise ErreurNonDetectee 
+  with
+  | ParametreRefAttendu _ -> ()
+
+(* Test 7 : paramètre ref non attendu *)
+let%test_unit "testReferenceType7" = 
+  try 
+    let _ = compiler (path ^ "testUnitaire7.rat") in
+    raise ErreurNonDetectee 
+  with
+  | ParametreNonRef _ -> ()
