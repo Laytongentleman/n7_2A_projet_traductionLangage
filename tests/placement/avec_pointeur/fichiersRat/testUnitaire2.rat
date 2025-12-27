@@ -1,0 +1,17 @@
+main {
+    bool x = false;
+    rat y = [7/3];
+    rat* z = (new rat);
+    
+    if (x) {
+        x = true;
+        bool y = false;
+        bool* z = (new bool);
+        int a = 10;
+    }
+    else {
+        int c = 3;
+    }
+
+    int a = 20;
+}

@@ -1,0 +1,10 @@
+int* f(int* x) {
+    int c = 3;
+    return &c;
+}
+
+main {
+    int* a = (new int);
+    (*a) = 2;
+    int* res = f(a);
+}

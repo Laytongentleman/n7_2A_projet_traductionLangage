@@ -223,24 +223,34 @@ struct
 (* = expression de AstType  *)
 type expression = AstType.expression
 
+(* Affectable existantes dans notre langage *)
+(* = affectable de AstType *)
+type affectable = AstType.affectable
+
 (* instructions existantes dans notre langage *)
 type bloc = instruction list * int (* taille du bloc *)
  and instruction =
  | Declaration of Tds.info_ast * expression
- | Affectation of Tds.info_ast * expression
+ | Affectation of affectable * expression
  | AffichageInt of expression
  | AffichageRat of expression
  | AffichageBool of expression
  | Conditionnelle of expression * bloc * bloc
  | TantQue of expression * bloc
  | Retour of expression * int * int (* taille du retour et taille des paramètres *)
+ | RetourVoid of int (* taille des paramètres *)
+ | AppelProcedure of Tds.info_ast * expression list 
  | Empty (* les nœuds ayant disparus: Const *)
 
 (* informations associées à l'identificateur (dont son nom), liste de paramètres, corps, expression de retour *)
-(* Plus besoin de la liste des paramètres mais on la garde pour les tests du placements mémoire *)
-type fonction = Fonction of Tds.info_ast * Tds.info_ast list * bloc
+type fonction = 
+  | Fonction of Tds.info_ast * Tds.info_ast list * bloc
+  | Procedure of Tds.info_ast * Tds.info_ast list * bloc 
+
+(* Strcuture des énumérations *)
+type enum_decl = Enum of Tds.info_ast * Tds.info_ast list
 
 (* Structure d'un programme dans notre langage *)
-type programme = Programme of fonction list * bloc
+type programme = Programme of enum_decl list * fonction list * bloc
 
 end
