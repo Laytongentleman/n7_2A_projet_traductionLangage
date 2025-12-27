@@ -73,8 +73,27 @@ let analyse_placement_fonction (AstType.Fonction (info, lip, b)) =
   let nb, _ = analyse_placement_bloc b 3 "LB" in
   AstPlacement.Fonction(info, lip, nb)
 
+(* analyse_placement_enum : enum_decl list -> int -> enum_decl list * int *)
+(* Place les énumérations globales et leurs valeurs en SB, retourne la liste avec adresses mises à jour et le prochain emplacement SB libre *)
+let analyse_placement_enum enums depl_init =
+  let rec aux enums depl acc =
+    match enums with
+    | [] -> (List.rev acc, depl)
+    | AstType.Enum(info_enum, values) :: rest ->
+        (* On ne place pas l'énum elle-même, seulement ses valeurs *)
+        let values_placées, depl_final =
+          List.fold_left (fun (acc_vals, d) value_info ->
+            Tds.modifier_adresse_variable d "SB" value_info;
+            (value_info :: acc_vals, d + 1)
+          ) ([], depl) values
+        in
+        aux rest depl_final (AstPlacement.Enum(info_enum, List.rev values_placées) :: acc)
+  in
+  aux enums depl_init []
+
 (* analyse : AstType.programme -> AstPlacement.programme *)
-let analyser (AstType.Programme (_, fonctions, prog)) =
+let analyser (AstType.Programme (enums, fonctions, prog)) =
+  let nenums, next_sb = analyse_placement_enum enums 0 in
   let nf = List.map analyse_placement_fonction fonctions in
-  let nb, _ = analyse_placement_bloc prog 0 "SB" in
-  AstPlacement.Programme ([], nf, nb)
+  let nb, _ = analyse_placement_bloc prog next_sb "SB" in
+  AstPlacement.Programme (nenums, nf, nb)

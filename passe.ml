@@ -98,9 +98,25 @@ let analyser_param info =
     match info_ast_to_info info with
     | InfoFun(n,_,_) -> [(n,(List.flatten (List.map analyser_param lp))@(List.flatten (List.map (analyser_instruction) li)))]
     | _ -> failwith "Internal error"
+  
+    (* Analyse une énumération *)
+  let analyser_enum (Ast.AstPlacement.Enum (info_enum, valeurs)) =
+    match info_ast_to_info info_enum with
+    | InfoEnum n ->
+        [(n, List.map (fun info_val ->
+          match info_ast_to_info info_val with
+          | InfoEnumVal (nom, _, d, r) ->
+              (nom,(d,r))
+          | _ -> failwith "Internal error enum val"
+        ) valeurs)]
+    | _ -> failwith "Internal error enum"
 
-  (* Renvoie la suite des adresses des variables déclarées dans les fonctions et dans le programme principal *)
-  let analyser (Ast.AstPlacement.Programme (_,fonctions, (prog,_))) =
-    ("main", List.flatten (List.map (analyser_instruction) prog))::(List.flatten (List.map (analyser_fonction) fonctions))
-
+    (* Analyse le programme complet *)
+  let analyser (Ast.AstPlacement.Programme (enums, fonctions, (prog,_))) =
+    let enums_list =
+      List.flatten (List.map analyser_enum enums)
+    in
+    let main_list = ("main", List.flatten (List.map analyser_instruction prog)) in
+    let fonctions_list = List.flatten (List.map analyser_fonction fonctions) in
+    main_list :: enums_list @ fonctions_list
 end

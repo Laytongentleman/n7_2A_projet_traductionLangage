@@ -302,7 +302,7 @@ let string_of_info info =
           ""
       in
       "Fonction " ^ n ^ " : (" ^ params_str ^ ") -> " ^ string_of_type t_ret
-  | InfoEnum n ->
+  | InfoEnum (n) ->
       "Enum "^n
   | InfoEnumVal (n, _, dep, base) ->
       "Valeur Enum "^n^" @"^base^"+"^(string_of_int dep)
@@ -357,6 +357,7 @@ let%test _ =
  let modifier_adresse_variable d b i =
      match !i with
      |InfoVar (n,t,_,_) -> i:= InfoVar (n,t,d,b)
+     |InfoEnumVal(n,t,_,_) -> i:= InfoEnumVal(n,t,d,b)
      | _ -> failwith "Appel modifier_adresse_variable pas sur un InfoVar"
 
 let%test _ = 

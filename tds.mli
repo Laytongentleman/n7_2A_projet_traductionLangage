@@ -63,5 +63,5 @@ val modifier_type_variable : typ -> info_ast -> unit
 (* Modifie les types de retour et des paramètres si c'est une InfoFun, ne fait rien sinon *)
 val modifier_type_fonction : typ -> (typ * bool) list -> info_ast -> unit
 
-(* Modifie l'emplacement (dépl, registre) si c'est une InfoVar, ne fait rien sinon *)
+(* Modifie l'emplacement (dépl, registre) si c'est une InfoVar/InfoEnum/InfoEnumVal, ne fait rien sinon *)
 val modifier_adresse_variable : int -> string -> info_ast -> unit

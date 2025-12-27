@@ -1,0 +1,16 @@
+// Déclaration de l’énumération Couleur
+enum Couleur { Rouge, Vert, Bleu };
+
+// Déclaration d’une autre énumération Jour
+enum Jour { Lundi, Mardi };
+
+// Programme principal
+main {
+    // On peut déclarer des variables de type enum
+    Couleur c = Rouge;
+    Jour j = Lundi;
+    
+    // Quelques affectations pour tester
+    c = Bleu;
+    j = Mardi;
+}
