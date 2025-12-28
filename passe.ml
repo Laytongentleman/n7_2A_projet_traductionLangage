@@ -92,12 +92,21 @@ let analyser_param info =
 
   (* Renvoie la suite des adresses des variables déclarées dans la fonction *)
   (* Ainsi qu'une adresse d'identifiant si le retour est un identifiant *)
-  let analyser_fonction (Ast.AstPlacement.Fonction(info,lp,(li,_))) =
-    (*La liste des paramètres n'est plus présente, pour tester le placement des paramètres, on utilisera une astuce :
-    il faudra écrire un programme qui renvoie le paramètre *)
-    match info_ast_to_info info with
-    | InfoFun(n,_,_) -> [(n,(List.flatten (List.map analyser_param lp))@(List.flatten (List.map (analyser_instruction) li)))]
-    | _ -> failwith "Internal error"
+  let analyser_fonction f =
+    match f with
+    | Ast.AstPlacement.Fonction (info, lp, (li,_))
+    | Ast.AstPlacement.Procedure (info, lp, (li,_)) ->
+        begin
+          match info_ast_to_info info with
+          | InfoFun (n, _, _) ->
+              [
+                ( n,
+                  (List.flatten (List.map analyser_param lp))
+                  @ (List.flatten (List.map analyser_instruction li))
+                )
+              ]
+          | _ -> failwith "Internal error"
+        end
   
     (* Analyse une énumération *)
   let analyser_enum (Ast.AstPlacement.Enum (info_enum, valeurs)) =

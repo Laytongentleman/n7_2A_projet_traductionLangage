@@ -50,6 +50,17 @@ let rec analyse_placement_instruction i depl reg =
 
   |AstType.Empty -> AstPlacement.Empty, 0
 
+  | AstType.AppelProcedure (info,args) -> (AstPlacement.AppelProcedure (info,args),0)
+
+  | AstType.RetourVoid infofun -> begin
+    match info_ast_to_info infofun with
+    | InfoFun(_,Void,tparams) ->
+      let taille_params = List.fold_right (fun t acc -> acc + getTaille t) 
+        (List.map fst tparams) 0 in
+      (AstPlacement.RetourVoid taille_params, 0)
+    | _ -> failwith "erreur interne"
+  end
+
 (* analyse_type_bloc : AstType.bloc -> int -> String -> AstPlacement.bloc * int *)
 and analyse_placement_bloc li depl reg =
   match li with 
@@ -58,20 +69,43 @@ and analyse_placement_bloc li depl reg =
             let (nq,tq),_ = analyse_placement_bloc q (depl+ti) reg in
             ((ni::nq), (ti+tq)), 0
 
-(* analyse_type_fonction : AstType.fonction -> AstPlacement.fonction *)
-let analyse_placement_fonction (AstType.Fonction (info, lip, b)) =
-  
-  let _ = List.fold_right (fun param depl ->
-    match Tds.info_ast_to_info param with
-    | InfoVar (_, tparam, _, _) ->
-        modifier_adresse_variable (depl - getTaille tparam) "LB" param;
-        (* (Printf.printf "%d ") (depl); *)
-        (depl - (getTaille tparam))
-    | _ -> failwith "erreur interne"
-  ) lip (0) in
-
-  let nb, _ = analyse_placement_bloc b 3 "LB" in
-  AstPlacement.Fonction(info, lip, nb)
+(* analyse_placement_fonction : AstType.fonction -> AstPlacement.fonction *)
+let analyse_placement_fonction f =
+  match f with
+  | AstType.Fonction (info, lip, b) ->
+      (* Placement des paramètres formels dans le cadre de pile (LB) *)
+      let _ =
+        List.fold_right
+          (fun param depl ->
+            match Tds.info_ast_to_info param with
+            | InfoVar (_, tparam, _, _) ->
+                modifier_adresse_variable (depl - getTaille tparam) "LB" param;
+                depl - getTaille tparam
+            | _ -> failwith "erreur interne : paramètre non variable"
+          )
+          lip
+          0
+      in
+      (* Placement du bloc de la fonction *)
+      let nb, _ = analyse_placement_bloc b 3 "LB" in
+      AstPlacement.Fonction (info, lip, nb)
+  | AstType.Procedure (info, lip, b) ->
+      (* Placement des paramètres formels dans le cadre de pile (LB) *)
+      let _ =
+        List.fold_right
+          (fun param depl ->
+            match Tds.info_ast_to_info param with
+            | InfoVar (_, tparam, _, _) ->
+                modifier_adresse_variable (depl - getTaille tparam) "LB" param;
+                depl - getTaille tparam
+            | _ -> failwith "erreur interne : paramètre non variable"
+          )
+          lip
+          0
+      in
+      (* Placement du bloc de la procédure *)
+      let nb, _ = analyse_placement_bloc b 3 "LB" in
+      AstPlacement.Procedure (info, lip, nb)
 
 (* analyse_placement_enum : enum_decl list -> int -> enum_decl list * int *)
 (* Place les énumérations globales et leurs valeurs en SB, retourne la liste avec adresses mises à jour et le prochain emplacement SB libre *)
