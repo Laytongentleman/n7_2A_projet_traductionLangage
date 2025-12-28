@@ -1,0 +1,7 @@
+void f(ref int a) {
+    return;
+}
+
+main {
+    int c = 1;
+}
