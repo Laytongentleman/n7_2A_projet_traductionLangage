@@ -50,8 +50,7 @@ let rec analyse_code_expression e =
     let nom_fonction =
       match info_ast_to_info info with
       | InfoFun(n, _, _) -> n
-      | InfoVar(_, _, _, _) | InfoConst(_, _) ->
-          failwith "erreur interne"
+      | _ -> failwith "erreur interne"
     in
     code_args ^ call "SB" nom_fonction
   | AstType.Affectable a -> 
@@ -84,6 +83,8 @@ let rec analyse_code_expression e =
       | EquInt ->
           se1 ^ se2 ^ subr "IEq"
       | EquBool ->
+          se1 ^ se2 ^ subr "IEq"
+      | EquEnum ->
           se1 ^ se2 ^ subr "IEq"   
       | Inf ->
           se1 ^ se2 ^ subr "ILss"
@@ -100,6 +101,14 @@ let rec analyse_code_expression e =
     | _ -> failwith "erreur interne"
   end 
   | AstType.New t -> loadl_int (getTaille t) ^ subr "MAlloc" 
+  | AstType.EnumE info -> begin
+    (* Récupération de l'adresse et du registre*)
+    (* Puis chargement de la valeur *)
+    match info_ast_to_info info with 
+    | InfoEnumVal(_,n,d,r) -> load (getTaille (Tid n)) d r
+    | _ -> failwith "erreur interne"
+  end 
+
 (* analyse_code_instruction: AstPlacement.instruction -> String  *)
 (* permet de générer le code tam associé à une instruction     *)
 (* Paramètre i : l'instruction dont on veut générer le code tam *)
@@ -153,6 +162,7 @@ let rec analyse_code_instruction i =
     ^ return tailleRet tailleParam
   | AstPlacement.Empty ->
     "\n"
+
 (* analyse_code_bloc : AstPlacement.bloc * int -> String *)
 and analyse_code_bloc (li, taille) =
   List.fold_left (fun acc i -> acc ^ analyse_code_instruction i) "" li
@@ -171,14 +181,37 @@ let analyse_code_fonction (AstPlacement.Fonction (info, _, (li, taille))) =
 
   label nom_fonction ^ code_li ^ halt
 
+(* analyse_code_enum : AstPlacement.Enum -> string *)
+let analyse_code_enum (AstPlacement.Enum (_ ,vals_enum)) =
+  (* Pour chaque valeur, on génère une instruction loadl avec son entier *)
+  let rec aux vals acc =
+    match vals with
+    | [] -> ""
+    | info_val :: rest ->
+        let code_val =
+          match Tds.info_ast_to_info info_val with
+          | InfoEnumVal (_, _, d, r) -> (push 1) ^ (loadl_int acc) ^ (store 1 d r)
+          | _ -> failwith "analyse_code_enum : info invalide"
+        in
+        code_val ^ aux rest (acc + 1)
+  in
+  aux vals_enum 0
+
 (* analyse : AstPlacement.programme -> String *)
 (* Permet de passer d'un AstPlacement au code TAM d'un programme *)
-let analyser (AstPlacement.Programme (_, fonctions, prog)) =
+let analyser (AstPlacement.Programme (enums, fonctions, prog)) =
   let code_entete = getEntete () in
+  let code_enums = String.concat "" (List.map analyse_code_enum enums) in
   let code_func_list = List.map analyse_code_fonction fonctions in
   let code_func = String.concat "" code_func_list in
-  let code_prog = label "main"^analyse_code_bloc prog in
-  code_entete ^ code_func ^ code_prog ^ halt
+  let code_prog = label "main" ^ analyse_code_bloc prog in
+  let code_total = code_enums ^ code_entete ^ code_func ^ code_prog ^ halt in
+  (* Affichage pour debug *)
+  (*print_endline "===== Code TAM généré =====";
+  print_endline code_total;
+  print_endline "============================"; *)
+  code_total
+
 
 
 

@@ -1,0 +1,13 @@
+enum Couleur {Rouge,Vert,Bleu};
+
+test {
+    Couleur c1 = Rouge;
+    if (c1 = Rouge) {
+        int c = 1;
+        print c;
+    } 
+    else {
+        int c = 0;
+        print c;
+    }
+}
