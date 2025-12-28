@@ -20,7 +20,7 @@ let rec analyse_type_affectable a =
   | AstTds.Ident info -> begin 
     (* Récupération des informations associées à l'identifiant *)
     match info_ast_to_info info with 
-    | InfoVar(_,t,_,_) ->
+    | InfoVar(_,t,_,_,_) ->
       (* Vérifie que la variable n'est pas de type Void *)
       if t=Void then 
         raise TypeVoidInattendu
@@ -124,7 +124,7 @@ let rec analyse_type_expression e =
     (AstType.Affectable na, ta)
   | AstTds.Adresse info -> begin 
     match info_ast_to_info info with 
-    | InfoVar (_,t,_,_) -> (AstType.Adresse info, Pointeur t)
+    | InfoVar (_,t,_,_,_) -> (AstType.Adresse info, Pointeur t)
     | _ -> failwith "erreur inerne"
   end
   | AstTds.Unaire (op, expr) -> begin
@@ -162,7 +162,7 @@ let rec analyse_type_expression e =
   | AstTds.Ref info ->
     begin
       match info_ast_to_info info with
-      | InfoVar (_, t, _,_) ->
+      | InfoVar (_, t, _,_,_) ->
           (AstType.Ref info, t)
       | _ -> failwith " erreur interne"
     end

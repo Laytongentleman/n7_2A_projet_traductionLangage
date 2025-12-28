@@ -14,7 +14,7 @@ let rec analyse_placement_instruction i depl reg =
   | AstType.Declaration (info, e) ->
       begin
         match info_ast_to_info info with
-        | InfoVar (_, tdecl, _, _) ->
+        | InfoVar (_, tdecl, _, _,_) ->
             modifier_adresse_variable depl reg info;
             (AstPlacement.Declaration (info, e), getTaille tdecl)
         | _ -> failwith "erreur interne"
@@ -78,7 +78,7 @@ let analyse_placement_fonction f =
         List.fold_right
           (fun param depl ->
             match Tds.info_ast_to_info param with
-            | InfoVar (_, tparam, _, _) ->
+            | InfoVar (_, tparam, _, _,_) ->
                 modifier_adresse_variable (depl - getTaille tparam) "LB" param;
                 depl - getTaille tparam
             | _ -> failwith "erreur interne : paramètre non variable"
@@ -95,7 +95,7 @@ let analyse_placement_fonction f =
         List.fold_right
           (fun param depl ->
             match Tds.info_ast_to_info param with
-            | InfoVar (_, tparam, _, _) ->
+            | InfoVar (_, tparam, _, _,_) ->
                 modifier_adresse_variable (depl - getTaille tparam) "LB" param;
                 depl - getTaille tparam
             | _ -> failwith "erreur interne : paramètre non variable"

@@ -1,0 +1,11 @@
+int p (ref int a, int b){
+    a = (a+1);
+    return (a+b);
+}
+
+test{
+    int x = 0;
+    int r = p (ref x ,3);
+    print r;
+    print x;
+}

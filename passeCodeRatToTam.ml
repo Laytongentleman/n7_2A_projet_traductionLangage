@@ -18,21 +18,28 @@ let rec analyse_code_affectable a ecriture acc prof_deref =
   match a with 
   | AstType.Ident info -> begin
       match info_ast_to_info info with
-      | InfoVar (_, t, depl, reg) ->
-          (* On calcule le type réellement accédé après prof_deref déréférencements *)
+      | InfoVar (_, t, depl, reg, est_ref) ->
+          (* On calcule le type réellement accédé *)
           let t_acces = profondeur_type t prof_deref in
           let taille = getTaille t_acces in
-          (* LOADA : charge l’adresse de la variable *)
-          (* acc : contient les LOADI intermédiaires *)
-          (* STOREI / LOADI selon écriture *)
-          loada depl reg
-          ^ acc
-          ^ (if ecriture then storei taille else loadi taille)
+
+          if est_ref then
+            (* On charge l'adresse contenue dans la variable (LOAD 1) *)
+            load 1 depl reg
+            ^ acc
+            (* On lit ou écrit à cette adresse *)
+            ^ (if ecriture then storei taille else loadi taille)
+          else
+            (* On charge l'adresse de la variable elle-même (LOADA) *)
+            loada depl reg
+            ^ acc
+            (* On lit ou écrit à cette adresse *)
+            ^ (if ecriture then storei taille else loadi taille)
+
       | _ -> failwith "erreur interne"
     end
   | AstType.Deref a ->
-      (* Chaque Deref ajoute un niveau d’indirection :
-         on charge l’adresse pointée *)
+      (* Pour une déréférence explicite (\*a), on ajoute une indirection *)
       analyse_code_affectable a ecriture (acc ^ loadi 1) (prof_deref + 1)
 
 (* analyse_code_expression: AstPlacement.expression -> String  *)
@@ -97,7 +104,7 @@ let rec analyse_code_expression e =
   | AstType.Null -> ""
   | AstType.Adresse info -> begin 
     match info_ast_to_info info with 
-    | InfoVar(_,_,d,r) -> loada d r 
+    | InfoVar(_,_,d,r,_) -> loada d r 
     | _ -> failwith "erreur interne"
   end 
   | AstType.New t -> loadl_int (getTaille t) ^ subr "MAlloc" 
@@ -107,7 +114,17 @@ let rec analyse_code_expression e =
     match info_ast_to_info info with 
     | InfoEnumVal(_,n,d,r) -> load (getTaille (Tid n)) d r
     | _ -> failwith "erreur interne"
-  end 
+  end
+  | AstType.Ref info -> begin
+    (* Ref renvoie l'adresse de la variable *)
+    match info_ast_to_info info with
+    | InfoVar(_, t, d, r, est_ref) ->
+        if est_ref then 
+          load (getTaille t) d r
+        else
+          loada d r 
+    | _ -> failwith "erreur interne"
+  end
 
 (* analyse_code_instruction: AstPlacement.instruction -> String  *)
 (* permet de générer le code tam associé à une instruction     *)
@@ -117,7 +134,7 @@ let rec analyse_code_instruction i =
   | AstPlacement.Declaration (info, e) ->
     let se = analyse_code_expression e in
     let (t,d,r) = match info_ast_to_info info with
-      |InfoVar(_,tr,dr,rr) -> (tr,dr,rr)
+      |InfoVar(_,tr,dr,rr,_) -> (tr,dr,rr)
       |_ -> failwith "erreur interne"
     in
     let taille_t = getTaille t in
@@ -226,7 +243,7 @@ let analyser (AstPlacement.Programme (enums, fonctions, prog)) =
   (* Affichage pour debug *)
   (*print_endline "===== Code TAM généré =====";
   print_endline code_total;
-  print_endline "============================"; *)
+  print_endline "============================";*)
   code_total
 
 

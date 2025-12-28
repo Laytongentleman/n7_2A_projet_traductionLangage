@@ -62,7 +62,7 @@ module CompilateurRat = Compilateur (PasseTdsRat) (PasseTypeRat) (PassePlacement
 *)
 
 (* + passe de génération de code -> compilateur complet *)
-module CompilateurRat = Compilateur (PasseTdsRat) (PasseTypeRat) (PassePlacementRat) (PasseCodeRatToTam)
+module CompilateurRat = Compilateur (PasseTdsRat) (PasseTypeRat) (PassePlacementRat) (PasseCodeRatToTam) 
 
 
 open Lexing

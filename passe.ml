@@ -73,7 +73,7 @@ struct
     | Ast.AstPlacement.Declaration (info,_) -> 
       begin
         match Tds.info_ast_to_info info with
-        | InfoVar (n,_,d,r) -> 
+        | InfoVar (n,_,d,r,_) -> 
           (* Printf.printf
               "[DEBUG] Declaration variable %s à l'adresse (%d,%s)\n"
               n d r; *)
@@ -87,7 +87,7 @@ struct
 
 let analyser_param info =
   match Tds.info_ast_to_info info with
-  | InfoVar (n,_,d,r) -> [(n,(d,r))]
+  | InfoVar (n,_,d,r,_) -> [(n,(d,r))]
   | _ -> []
 
   (* Renvoie la suite des adresses des variables déclarées dans la fonction *)
