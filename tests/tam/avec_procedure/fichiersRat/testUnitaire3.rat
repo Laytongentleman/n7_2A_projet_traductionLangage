@@ -1,0 +1,12 @@
+void printRAdd(rat a, rat b) {
+    print a;
+    print b;
+    print (a+b);
+    return;
+}
+
+main {
+    rat x = [1/2];
+    rat y = [3/4];
+    printRAdd(x,y);
+}

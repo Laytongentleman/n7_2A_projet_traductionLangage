@@ -1,0 +1,10 @@
+void p(int a) {
+    int b = (a + 1);
+    print b;
+    return;
+}
+
+test {
+    int x = 5;
+    p(x);
+}

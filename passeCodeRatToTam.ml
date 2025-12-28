@@ -146,7 +146,6 @@ let rec analyse_code_instruction i =
     let lbl_end  = label nom_end in
 
     sc ^ jumpif 0 nom_else ^ st ^ jump nom_end ^ lbl_else ^ se ^ lbl_end
-
   | AstPlacement.TantQue (c, b) ->
     let nom_debut = getEtiquette () in
     let lbl_debut = label nom_debut in
@@ -160,6 +159,21 @@ let rec analyse_code_instruction i =
   | AstPlacement.Retour (e, tailleRet, tailleParam) ->
     analyse_code_expression e
     ^ return tailleRet tailleParam
+  | AstPlacement.RetourVoid tailleParam ->
+    return 0 tailleParam
+  | AstPlacement.AppelProcedure (info,le) ->
+    let code_args =
+      List.fold_right
+        (fun e acc -> analyse_code_expression e ^ acc)
+        le
+        ""
+    in
+    let nom_fonction =
+      match info_ast_to_info info with
+      | InfoFun(n, _, _) -> n
+      | _ -> failwith "erreur interne"
+    in
+    code_args ^ call "SB" nom_fonction
   | AstPlacement.Empty ->
     "\n"
 
@@ -169,7 +183,10 @@ and analyse_code_bloc (li, taille) =
   ^ pop 0 taille
 
 (* analyse_code_fonction: AstPlacement.fonction -> String *)
-let analyse_code_fonction (AstPlacement.Fonction (info, _, (li, taille))) =
+let analyse_code_fonction f =
+  match f with 
+  | AstPlacement.Fonction (info, _, (li,taille)) 
+  | AstPlacement.Procedure (info, _, (li,taille)) ->
   (* Récupération des infos de la fonction *)
   let (nom_fonction, _, _) = match info_ast_to_info info with
     | InfoFun(n, _, _) -> (n, 0, 0)  (* les autres valeurs ne sont pas utiles ici *)

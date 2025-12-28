@@ -1,0 +1,11 @@
+void q(int a, int b) {
+    int c = (a * b);
+    print c;
+    return;
+}
+
+test {
+    int x = 2;
+    int y = 3;
+    q(x, y);
+}
