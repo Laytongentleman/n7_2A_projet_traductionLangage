@@ -1,0 +1,13 @@
+int f(int* p) {
+    return (*p);
+}
+
+test {
+    int x = 12;
+    int* p = (new int);
+
+    (*p) = x;
+    int y = f(p);
+
+    print y;   // attendu : 12
+}

@@ -1,0 +1,10 @@
+test {
+    int x = 42;
+    int* p = (new int);
+    int** pp = (new int*);
+
+    (*p) = x;
+    (*pp) = p;
+
+    print (*(*pp));   // attendu : 42
+}

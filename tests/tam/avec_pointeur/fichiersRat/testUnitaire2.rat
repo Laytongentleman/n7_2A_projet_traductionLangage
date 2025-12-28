@@ -1,0 +1,11 @@
+test {
+    int x = 10;
+    int* p = (new int);
+
+    (*p) = x;
+    // attendu : 10
+
+    x = 20;
+    (*p) = x;
+    print (*p);   // attendu : 20
+}

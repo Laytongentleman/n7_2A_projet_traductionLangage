@@ -90,3 +90,13 @@ let%test _ = getTaille Void = 0
 let%test _ = getTaille (Tid "Jour") = 1
 let%test _ = getTaille (Pointeur (Tid "Jour")) = 1
 
+let rec profondeur_type t n =
+  match n, t with
+  | 0, _ -> t
+  | _, Pointeur t' -> profondeur_type t' (n - 1)
+  | _, _ ->
+      failwith "Déréférencement invalide : type non pointeur"
+
+let%test _ = profondeur_type (Pointeur Int) 0 = Pointeur Int 
+let%test _ = profondeur_type (Pointeur Int) 1 = Int 
+let%test _ = profondeur_type (Pointeur (Pointeur Int)) 2 = Int
