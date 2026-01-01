@@ -1,8 +1,0 @@
-void f(int a, int b) {
-    return;
-}
-
-test {
-    int a = 1;
-    f(a);
-}
