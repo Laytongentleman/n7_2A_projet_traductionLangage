@@ -325,14 +325,16 @@ and analyse_type_bloc li =
 let analyse_type_fonction (AstTds.Fonction (tdecl, infofun, lp, li)) =
   match info_ast_to_info infofun with
   | InfoFun (_, tret, tparams) ->
+      (* Vérification du type de retour *)
       if tret <> tdecl then
         raise (TypeInattendu (tret, tdecl));
-
+      (* Vérification du nombre de paramètres *)
       if List.length lp <> List.length tparams then
         raise
           (TypesParametresInattendus
              (List.map fst lp, List.map fst tparams));
 
+      (* Vérification des types des paramètres *)
       List.iter2
         (fun (tdecl_param, _) (tparam, _is_ref) ->
            if not (est_compatible tdecl_param tparam) then
@@ -340,8 +342,9 @@ let analyse_type_fonction (AstTds.Fonction (tdecl, infofun, lp, li)) =
         )
         lp tparams;
 
+      (* Analyse du bloc de la fonction *)
       let nli = analyse_type_bloc li in
-
+      (* on construit la fonction ou procédure en fonction du retour *)
       if tret = Type.Void then
         AstType.Procedure (infofun, List.map snd lp, nli)
       else

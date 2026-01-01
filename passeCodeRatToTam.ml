@@ -48,36 +48,47 @@ let rec analyse_code_affectable a ecriture acc prof_deref =
 let rec analyse_code_expression e =
   match e with 
   | AstType.AppelFonction (info, le) ->
+      (* Génération du code des arguments *)
     let code_args =
       List.fold_right
         (fun e acc -> analyse_code_expression e ^ acc)
         le
         ""
     in
+    (* Récupération du nom de la fonction *)
     let nom_fonction =
       match info_ast_to_info info with
       | InfoFun(n, _, _) -> n
       | _ -> failwith "erreur interne"
     in
+    (* Appel de la fonction *)
     code_args ^ call "SB" nom_fonction
   | AstType.Affectable a -> 
+    (* On génère le code pour lire la valeur de l'affectable *)
     let sa = analyse_code_affectable a false "" 0 in
     sa
   | AstType.Booleen b ->
+    (* On charge 1 pour true, 0 pour false *)
     loadl_int (if b then 1 else 0)
   | AstType.Entier n ->
+    (* On charge l'entier n *)
     loadl_int n
   | AstType.Unaire (op, e) ->
+    (* On génère le code de l'expression e *)
     let se = analyse_code_expression e in
+    (* On ajoute l'opération unaire correspondante *)
     let sop =
       match op with
       | AstType.Numerateur   -> pop 0 1   
       | AstType.Denominateur -> pop 1 1
     in
+    (* On renvoie le code de e suivi de l'opération unaire *)
     se ^ sop
   | AstType.Binaire (op, e1, e2) ->
+    (* Génération du code des deux expressions e1 et e2 *)
     let se1 = analyse_code_expression e1 in
     let se2 = analyse_code_expression e2 in
+    (* Ajout de l'opération binaire correspondante *)
     let sop =
       match op with
       | Fraction ->
@@ -101,13 +112,21 @@ let rec analyse_code_expression e =
           se1 ^ se2 ^ call "SB" "RMul"
     in
     sop
-  | AstType.Null -> ""
-  | AstType.Adresse info -> begin 
-    match info_ast_to_info info with 
-    | InfoVar(_,_,d,r,_) -> loada d r 
-    | _ -> failwith "erreur interne"
-  end 
-  | AstType.New t -> loadl_int (getTaille t) ^ subr "MAlloc" 
+  | AstType.Null -> 
+      (* On charge l'adresse nulle 0 *)
+
+      ""
+  
+  | AstType.Adresse info ->
+    (* Adresse d'une variable : on charge son adresse *)
+    begin 
+      match info_ast_to_info info with 
+      | InfoVar(_,_,d,r,_) -> loada d r 
+      | _ -> failwith "erreur interne"
+    end 
+  | AstType.New t -> 
+    (* Allocation d'un nouvel espace mémoire pour le type t *)
+      loadl_int (getTaille t) ^ subr "MAlloc" 
   | AstType.EnumE info -> begin
     (* Récupération de l'adresse et du registre*)
     (* Puis chargement de la valeur *)
@@ -132,66 +151,83 @@ let rec analyse_code_expression e =
 let rec analyse_code_instruction i =
   match i with 
   | AstPlacement.Declaration (info, e) ->
+    (* Génération du code de l'expression e *)
     let se = analyse_code_expression e in
+    (* Récupération des infos de la variable *)
     let (t,d,r) = match info_ast_to_info info with
       |InfoVar(_,tr,dr,rr,_) -> (tr,dr,rr)
       |_ -> failwith "erreur interne"
     in
+    (* Taille du type de la variable *)
     let taille_t = getTaille t in
     (push taille_t)^se^(store taille_t d r)
   | AstPlacement.Affectation (a, e) ->
+    (* Génération du code de l'expression e *)
     let se = analyse_code_expression e in
     let sa = analyse_code_affectable a true "" 0 in
     se ^ sa 
   | AstPlacement.AffichageInt e ->
+      (* on génère le code de l'expression e *)
     let se = analyse_code_expression e in
+      (* on ajoute l'instruction d'affichage *)
     se^(subr "IOut")
   | AstPlacement.AffichageRat e ->
+      (* on génère le code de l'expression e *)
     let se = analyse_code_expression e in
+      (* on ajoute l'instruction d'affichage *)
     se^(call "SB" "ROut")
   | AstPlacement.AffichageBool e ->
+      (* on génère le code de l'expression e *)
     let se = analyse_code_expression e in
+      (* on ajoute l'instruction d'affichage *)
     se^(subr "BOut")
   | AstPlacement.Conditionnelle (c, t, e) ->
+      (* Génération du code de la condition, du bloc "then" et du bloc "else" *)
     let sc = analyse_code_expression c in
     let st = analyse_code_bloc t in
     let se = analyse_code_bloc e in
-
+      (* Génération des étiquettes pour le saut *)
     let nom_else = getEtiquette () in
     let lbl_else = label nom_else in
     let nom_end  = getEtiquette () in
     let lbl_end  = label nom_end in
-
+      (* on assemble code final *)
     sc ^ jumpif 0 nom_else ^ st ^ jump nom_end ^ lbl_else ^ se ^ lbl_end
   | AstPlacement.TantQue (c, b) ->
     let nom_debut = getEtiquette () in
     let lbl_debut = label nom_debut in
     let nom_fin   = getEtiquette () in
     let lbl_fin   = label nom_fin in
-
+      (* on génère le code de la condition et du bloc *)
     let sc = analyse_code_expression c in
     let sb = analyse_code_bloc b in
-
+      (* on assemble le code final *)
     lbl_debut ^ sc ^ jumpif 0 nom_fin ^ sb ^ jump nom_debut ^ lbl_fin  
   | AstPlacement.Retour (e, tailleRet, tailleParam) ->
+    (* on génère le code de l'expression e *)
     analyse_code_expression e
     ^ return tailleRet tailleParam
   | AstPlacement.RetourVoid tailleParam ->
+      (* on génère le code de retour pour une procédure *)
     return 0 tailleParam
   | AstPlacement.AppelProcedure (info,le) ->
+      (*on génère le code des arguments *)
     let code_args =
       List.fold_right
         (fun e acc -> analyse_code_expression e ^ acc)
         le
         ""
     in
+     (* on récupère le nom de la procédure *)
     let nom_fonction =
       match info_ast_to_info info with
       | InfoFun(n, _, _) -> n
       | _ -> failwith "erreur interne"
     in
+      (* on appelle la procédure *)      
     code_args ^ call "SB" nom_fonction
   | AstPlacement.Empty ->
+      (* instruction vide : on ne génère rien *)
     "\n"
 
 (* analyse_code_bloc : AstPlacement.bloc * int -> String *)

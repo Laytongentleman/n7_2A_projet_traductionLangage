@@ -12,6 +12,7 @@ type t2 = Ast.AstPlacement.programme
 let rec analyse_placement_instruction i depl reg =
   match i with
   | AstType.Declaration (info, e) ->
+      (* on place la variable et on met à jour son info_ast *)
       begin
         match info_ast_to_info info with
         | InfoVar (_, tdecl, _, _,_) ->
@@ -21,15 +22,18 @@ let rec analyse_placement_instruction i depl reg =
       end
 
   | AstType.Conditionnelle (c, bt, be) ->
+      (* on analyse les deux branches du if *)
       let (nbt, _) = analyse_placement_bloc bt depl reg and
       (nbe, _) = analyse_placement_bloc be depl reg in
       (AstPlacement.Conditionnelle (c, nbt, nbe), 0)
 
   | AstType.TantQue (c, b) ->
+      (* on analyse le bloc de la boucle *)
       let (nb, _) = analyse_placement_bloc b depl reg in
       (AstPlacement.TantQue (c, nb), 0)
 
   | AstType.Retour (e, infofun) -> begin 
+     (* on récupère le type de retour et les types des paramètres de la fonction *)
     match info_ast_to_info infofun with
     | InfoFun (_, tret, tp) ->
         (AstPlacement.Retour (e, (getTaille tret), (List.fold_right (fun t tq -> tq + (getTaille t))  (List.map fst tp) 0 )) , 0)
@@ -52,14 +56,16 @@ let rec analyse_placement_instruction i depl reg =
 
   | AstType.AppelProcedure (info,args) -> (AstPlacement.AppelProcedure (info,args),0)
 
-  | AstType.RetourVoid infofun -> begin
-    match info_ast_to_info infofun with
-    | InfoFun(_,Void,tparams) ->
-      let taille_params = List.fold_right (fun t acc -> acc + getTaille t) 
-        (List.map fst tparams) 0 in
-      (AstPlacement.RetourVoid taille_params, 0)
-    | _ -> failwith "erreur interne"
-  end
+  | AstType.RetourVoid infofun -> 
+    (* on récupère les types des paramètres de la fonction *)
+    begin
+      match info_ast_to_info infofun with
+      | InfoFun(_,Void,tparams) ->
+        let taille_params = List.fold_right (fun t acc -> acc + getTaille t) 
+          (List.map fst tparams) 0 in
+        (AstPlacement.RetourVoid taille_params, 0)
+      | _ -> failwith "erreur interne"
+    end
 
 (* analyse_type_bloc : AstType.bloc -> int -> String -> AstPlacement.bloc * int *)
 and analyse_placement_bloc li depl reg =
